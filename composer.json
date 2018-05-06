@@ -1,0 +1,16 @@
+{
+    "name": "fang/php-resque",
+    "description": "fang's php-resque dev",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "fangqk1991",
+            "email": "me@fangqk.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "chrisboulton/php-resque": "1.2.x"
+    }
+}
