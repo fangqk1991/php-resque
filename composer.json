@@ -10,6 +10,9 @@
         }
     ],
     "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {"FC\\Resque\\": "library/"}
+    },
     "require": {
         "chrisboulton/php-resque": "1.2.x"
     }

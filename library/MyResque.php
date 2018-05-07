@@ -1,5 +1,7 @@
 <?php
 
+namespace FC\Resque;
+
 include_once __DIR__ . '/common.inc';
 
 class MyResque
@@ -34,16 +36,16 @@ class MyResque
         $obj->host = $host;
         $obj->port = $port;
 
-        Resque::setBackend(sprintf('%s:%s', $obj->host, $obj->port));
+        \Resque::setBackend(sprintf('%s:%s', $obj->host, $obj->port));
     }
 
 	public static function enqueue($queue, $task, $args)
 	{
 		try
 		{
-			Resque::enqueue($queue, $task, $args, true);
+			\Resque::enqueue($queue, $task, $args, true);
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 		}
 	}
