@@ -2,8 +2,6 @@
 
 namespace FC\Resque;
 
-include_once __DIR__ . '/common.inc';
-
 class MyResque
 {
     private static $_instance = NULL;
