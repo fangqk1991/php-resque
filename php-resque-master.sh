@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/bash
 
 __FILE__="$0"
 REAL_FILE=`readlink "${__FILE__}"`
