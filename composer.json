@@ -19,9 +19,9 @@
     "archive": {
         "exclude": [
             "/php-resque-master.sh",
-            "run.local",
-            "config.local",
-            "config.examples",
+            "/run.local",
+            "/config.local",
+            "/config.examples",
             "/examples"
         ]
     }
