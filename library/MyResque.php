@@ -39,12 +39,6 @@ class MyResque
 
 	public static function enqueue($queue, $task, $args)
 	{
-		try
-		{
-			\Resque::enqueue($queue, $task, $args, true);
-		}
-		catch(\Exception $e)
-		{
-		}
+        \Resque::enqueue($queue, $task, $args, true);
 	}
 }
