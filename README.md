@@ -22,7 +22,8 @@
 * Redis 2.2+
 * Composer
 
-### 使用
+### Master 使用
+#### 0. 下载本工程
 #### 1. 安装依赖库
 ```
 composer install
@@ -34,3 +35,32 @@ composer install
 #### 3. 编辑 `config.local/ResqueMainJobs.php`
 
 
+### 应用工程使用
+#### 0. 在应用工程 composer.json 中添加 php-resque
+```
+{
+    "require": {
+        "fang/php-resque": "dev-master"
+    }
+}
+```
+
+#### 1. 安装依赖库
+```
+composer install
+```
+
+#### 2. 引入 autoload 文件
+```
+require 'vendor/autoload.php';
+```
+
+#### 3. 定义异步任务
+* 异步任务继承于 `ResqueTaskBase.php`，可参考 `SomeTask.php`
+
+#### 4. 使用 MyResque
+```
+MyResque::init('127.0.0.1', 6488);
+MyResque::enqueue('TASK_2', 'SomeTask2', array());
+MyResque::enqueue('TASK_1', '\FC\Example\SomeTask', array());
+```
