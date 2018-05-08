@@ -15,5 +15,14 @@
     },
     "require": {
         "chrisboulton/php-resque": "1.2.x"
+    },
+    "archive": {
+        "exclude": [
+            "/php-resque-master.sh",
+            "/run.local",
+            "/config.local",
+            "/config.examples",
+            "/examples"
+        ]
     }
 }
