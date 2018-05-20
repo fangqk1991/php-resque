@@ -31,9 +31,7 @@ composer install
 
 #### 2. 编辑 `config.local/resque.main.config`
 
-
 #### 3. 编辑 `config.local/ResqueMainJobs.php`
-
 
 ### 应用工程使用
 #### 0. 在应用工程 composer.json 中添加 php-resque
@@ -59,7 +57,7 @@ require 'vendor/autoload.php';
 * 异步任务继承于 `ResqueTaskBase.php`，可参考 `SomeTask.php`
 
 #### 4. 使用案例
-参考 `MyResqueEx.php` 建立一个本地化的 `MyResque.php` 文件
+可参考 `MyResqueEx.php` 建立一个本地化的 `MyResque.php` 文件
 
 ```
 MyResque::enqueue('TASK_2', 'SomeTask2', array());

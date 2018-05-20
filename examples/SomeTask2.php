@@ -1,6 +1,6 @@
 <?php
 
-include_once __DIR__ . '/../library/ResqueTaskBase.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use \FC\Resque\ResqueTaskBase;
 
