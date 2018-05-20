@@ -1,0 +1,9 @@
+<?php
+
+// 和 resque.main.config 中的配置对应
+
+class MyConfig
+{
+    const Resque_Host = '127.0.0.1';
+    const Resque_Port = 6488;
+}

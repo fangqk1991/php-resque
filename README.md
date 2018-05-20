@@ -58,9 +58,10 @@ require 'vendor/autoload.php';
 #### 3. 定义异步任务
 * 异步任务继承于 `ResqueTaskBase.php`，可参考 `SomeTask.php`
 
-#### 4. 使用 MyResque
+#### 4. 使用案例
+参考 `MyResqueEx.php` 建立一个本地化的 `MyResque.php` 文件
+
 ```
-MyResque::init('127.0.0.1', 6488);
 MyResque::enqueue('TASK_2', 'SomeTask2', array());
 MyResque::enqueue('TASK_1', '\FC\Example\SomeTask', array());
 ```
