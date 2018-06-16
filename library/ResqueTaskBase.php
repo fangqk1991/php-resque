@@ -2,6 +2,8 @@
 
 namespace FC\Resque;
 
+use Exception;
+
 abstract class ResqueTaskBase
 {
     public abstract function myTask($params);
@@ -14,14 +16,14 @@ abstract class ResqueTaskBase
         {
             $this->myTask($args);
         }
-        catch (\Exception $e)
+        catch (Exception $e)
         {
             $this->onException($e);
         }
     }
 
-    public function onException(\Exception $e)
+    public function onException(Exception $e)
     {
-        echo "Error: " . date('Y-m-d H:i:s') . "\n";
+        echo sprintf("%s [Error: %d] %s \n", date('Y-m-d H:i:s'), $e->getCode(), $e->getMessage());
     }
 }
