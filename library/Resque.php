@@ -1,43 +1,19 @@
 <?php
-/**
- * Base Resque class.
- *
- * @package		Resque
- * @author		Chris Boulton <chris@bigcommerce.com>
- * @license		http://www.opensource.org/licenses/mit-license.php
- */
+
+namespace FC\Resque;
+
+use FC\Resque\Job\DontCreateException;
+
 class Resque
 {
-	const VERSION = '1.2';
+	const VERSION = '1.3';
 
     const DEFAULT_INTERVAL = 5;
 
-	/**
-	 * @var Resque_Redis Instance of Resque_Redis that talks to redis.
-	 */
 	public static $redis = null;
-
-	/**
-	 * @var mixed Host/port conbination separated by a colon, or a nested
-	 * array of server swith host/port pairs
-	 */
 	protected static $redisServer = null;
-
-	/**
-	 * @var int ID of Redis database to select.
-	 */
 	protected static $redisDatabase = 0;
 
-	/**
-	 * Given a host/port combination separated by a colon, set it as
-	 * the redis server that Resque will talk to.
-	 *
-	 * @param mixed $server Host/port combination separated by a colon, DSN-formatted URI, or
-	 *                      a callable that receives the configured database ID
-	 *                      and returns a Resque_Redis instance, or
-	 *                      a nested array of servers with host/port pairs.
-	 * @param int $database
-	 */
 	public static function setBackend($server, $database = 0)
 	{
 		self::$redisServer   = $server;
@@ -45,11 +21,6 @@ class Resque
 		self::$redis         = null;
 	}
 
-	/**
-	 * Return an instance of the Resque_Redis class instantiated for Resque.
-	 *
-	 * @return Resque_Redis Instance of Resque_Redis.
-	 */
 	public static function redis()
 	{
 		if (self::$redis !== null) {
@@ -59,7 +30,7 @@ class Resque
 		if (is_callable(self::$redisServer)) {
 			self::$redis = call_user_func(self::$redisServer, self::$redisDatabase);
 		} else {
-			self::$redis = new Resque_Redis(self::$redisServer, self::$redisDatabase);
+			self::$redis = new Redis(self::$redisServer, self::$redisDatabase);
 		}
 
 		return self::$redis;
@@ -86,7 +57,7 @@ class Resque
 
 		$pid = pcntl_fork();
 		if($pid === -1) {
-			throw new RuntimeException('Unable to fork child worker.');
+			throw new \RuntimeException('Unable to fork child worker.');
 		}
 
 		return $pid;
@@ -226,14 +197,14 @@ class Resque
 			'id'    => $id,
 		);
 		try {
-			Resque_Event::trigger('beforeEnqueue', $hookParams);
+			Event::trigger('beforeEnqueue', $hookParams);
 		}
-		catch(Resque_Job_DontCreate $e) {
+		catch(DontCreateException $e) {
 			return false;
 		}
 
-		Resque_Job::create($queue, $class, $args, $trackStatus, $id);
-		Resque_Event::trigger('afterEnqueue', $hookParams);
+		Job::create($queue, $class, $args, $trackStatus, $id);
+        Event::trigger('afterEnqueue', $hookParams);
 
 		return $id;
 	}
@@ -242,11 +213,11 @@ class Resque
 	 * Reserve and return the next available job in the specified queue.
 	 *
 	 * @param string $queue Queue to fetch next available job from.
-	 * @return Resque_Job Instance of Resque_Job to be processed, false if none or error.
+	 * @return false|Job|object
 	 */
 	public static function reserve($queue)
 	{
-		return Resque_Job::reserve($queue);
+		return Job::reserve($queue);
 	}
 
 	/**

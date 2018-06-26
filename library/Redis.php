@@ -1,4 +1,7 @@
 <?php
+
+namespace FC\Resque;
+
 /**
  * Wrap Credis to add namespace support and various helper methods.
  *
@@ -6,7 +9,7 @@
  * @author		Chris Boulton <chris@bigcommerce.com>
  * @license		http://www.opensource.org/licenses/mit-license.php
  */
-class Resque_Redis
+class Redis
 {
 	/**
 	 * Redis namespace
@@ -114,7 +117,7 @@ class Resque_Redis
 	{
 		try {
 			if (is_array($server)) {
-				$this->driver = new Credis_Cluster($server);
+				$this->driver = new \Credis_Cluster($server);
 			}
 			else if (is_object($client)) {
 				$this->driver = $client;
@@ -128,7 +131,7 @@ class Resque_Redis
 				$persistent = isset($options['persistent']) ? $options['persistent'] : '';
 				$maxRetries = isset($options['max_connect_retries']) ? $options['max_connect_retries'] : 0;
 
-				$this->driver = new Credis_Client($host, $port, $timeout, $persistent);
+				$this->driver = new \Credis_Client($host, $port, $timeout, $persistent);
 				$this->driver->setMaxConnectRetries($maxRetries);
 				if ($password){
 					$this->driver->auth($password);
@@ -145,8 +148,8 @@ class Resque_Redis
 				$this->driver->select($database);
 			}
 		}
-		catch(CredisException $e) {
-			throw new Resque_RedisException('Error communicating with Redis: ' . $e->getMessage(), 0, $e);
+		catch(\CredisException $e) {
+			throw new RedisException('Error communicating with Redis: ' . $e->getMessage(), 0, $e);
 		}
 	}
 
@@ -248,8 +251,8 @@ class Resque_Redis
 		try {
 			return $this->driver->__call($name, $args);
 		}
-		catch (CredisException $e) {
-			throw new Resque_RedisException('Error communicating with Redis: ' . $e->getMessage(), 0, $e);
+		catch (\CredisException $e) {
+			throw new RedisException('Error communicating with Redis: ' . $e->getMessage(), 0, $e);
 		}
 	}
 

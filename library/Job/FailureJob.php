@@ -1,13 +1,11 @@
 <?php
-/**
- * Redis backend for storing failed Resque jobs.
- *
- * @package		Resque/Failure
- * @author		Chris Boulton <chris@bigcommerce.com>
- * @license		http://www.opensource.org/licenses/mit-license.php
- */
 
-class Resque_Failure_Redis implements Resque_Failure_Interface
+namespace FC\Resque\Job;
+
+use FC\Resque\Resque;
+use stdClass;
+
+class FailureJob implements IFailureJob
 {
 	/**
 	 * Initialize a failed job class and save it (where appropriate).

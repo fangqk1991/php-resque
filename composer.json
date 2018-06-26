@@ -12,10 +12,9 @@
   "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
-      "FC\\Resque\\": "library/"
-    },
-    "psr-0": {
-      "Resque": "lib"
+      "FC\\Resque\\": "library/",
+      "FC\\Resque\\Job\\": "library/Job/",
+      "FC\\Resque\\Failure\\": "library/Failure/"
     }
   },
   "require": {

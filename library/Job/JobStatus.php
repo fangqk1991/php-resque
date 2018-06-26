@@ -1,12 +1,10 @@
 <?php
-/**
- * Status tracker/information for a job.
- *
- * @package		Resque/Job
- * @author		Chris Boulton <chris@bigcommerce.com>
- * @license		http://www.opensource.org/licenses/mit-license.php
- */
-class Resque_Job_Status
+
+namespace FC\Resque\Job;
+
+use FC\Resque\Resque;
+
+class JobStatus
 {
 	const STATUS_WAITING = 1;
 	const STATUS_RUNNING = 2;

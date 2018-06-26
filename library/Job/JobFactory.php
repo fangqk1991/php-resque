@@ -1,25 +1,21 @@
 <?php
 
-class Resque_Job_Factory implements Resque_Job_FactoryInterface
-{
+namespace FC\Resque\Job;
 
-    /**
-     * @param $className
-     * @param array $args
-     * @param $queue
-     * @return Resque_JobInterface
-     * @throws \Resque_Exception
-     */
+use FC\Resque\ResqueException;
+
+class JobFactory implements IJobFactory
+{
     public function create($className, $args, $queue)
     {
         if (!class_exists($className)) {
-            throw new Resque_Exception(
+            throw new ResqueException(
                 'Could not find job class ' . $className . '.'
             );
         }
 
         if (!method_exists($className, 'perform')) {
-            throw new Resque_Exception(
+            throw new ResqueException(
                 'Job class ' . $className . ' does not contain a perform method.'
             );
         }
