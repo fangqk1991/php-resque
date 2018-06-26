@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config.local/MyConfig.php';
+require_once __DIR__ . '/MyConfigEx.php';
 
 class MyResqueEx
 {
@@ -11,5 +11,5 @@ class MyResqueEx
     }
 }
 
-Resque::setBackend(sprintf('%s:%s', MyConfig::Resque_Host, MyConfig::Resque_Port));
+Resque::setBackend(MyConfigEx::Resque_RedisEnd);
 

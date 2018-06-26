@@ -32,9 +32,8 @@ start() {
 
     echo "runningDir: ${runningDir}"
     echo "Starting php-resque..."
-#    nohup php "${__DIR__}/php-resque.php" >>"${logFile}" 2>&1 &
-#    echo $! > "${pidFile}"
-    php "${__DIR__}/php-resque.php"
+    nohup php "${__DIR__}/php-resque.php" >>"${logFile}" 2>&1 &
+    echo $! > "${pidFile}"
 }
 
 stop() {

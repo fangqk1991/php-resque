@@ -8,9 +8,7 @@ class SomeTask2 extends ResqueTaskBase
 {
     public function myTask($params)
     {
-        $msg = 'SomeTask2: ' . date('Y-m-d H:i:s');
-        echo "$msg\n";
-        shell_exec(sprintf('echo "%s" >> %s/example.txt', $msg, __DIR__));
+        echo sprintf("%s %s %s\n", date('Y-m-d H:i:s'), __CLASS__, __FUNCTION__);
     }
 
     public function onException(\Exception $e)

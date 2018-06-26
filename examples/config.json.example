@@ -1,0 +1,10 @@
+{
+  "redis": "127.0.0.1:6488",
+  "queues": [
+    "TASK_1",
+    "TASK_2"
+  ],
+  "includes": [
+    "~/php-resque-1/examples/ResqueJobs.php"
+  ]
+}

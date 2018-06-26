@@ -1,7 +1,6 @@
 <?php
 
-require_once __DIR__ . '/vendor/chrisboulton/php-resque/lib/Resque.php';
-require_once __DIR__ . '/vendor/chrisboulton/php-resque/lib/Resque/Worker.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 $content = file_get_contents(__DIR__ . '/config.local/config.json');
 $data = json_decode($content, TRUE);
@@ -20,7 +19,7 @@ if(!is_array($queues) || count($queues) === 0) {
 
 Resque::setBackend($redisBackend);
 
-$logLevel = Resque_Worker::LOG_NONE;
+$logLevel = false;
 foreach ($includes as $file)
 {
     if(!file_exists($file)) {
@@ -31,11 +30,7 @@ foreach ($includes as $file)
 }
 
 $worker = new Resque_Worker($queues);
-$worker->logLevel = $logLevel;
 fwrite(STDOUT, '*** Starting worker '.$worker."\n");
-$worker->work();
-
-
-
+$worker->work(Resque::DEFAULT_INTERVAL, TRUE);
 
 
