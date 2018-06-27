@@ -3,6 +3,7 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 use FC\Resque\Resque;
+use FC\Resque\ResqueWorker;
 
 $content = file_get_contents(__DIR__ . '/config.local/config.json');
 $data = json_decode($content, TRUE);
@@ -31,8 +32,8 @@ foreach ($includes as $file)
     require_once $file;
 }
 
-$worker = new \FC\Resque\ResqueWorker($queues);
+$worker = new ResqueWorker($queues);
 fwrite(STDOUT, '*** Starting worker '.$worker."\n");
-$worker->work(Resque::DEFAULT_INTERVAL, TRUE);
+$worker->work(50, TRUE);
 
 

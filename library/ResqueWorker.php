@@ -5,8 +5,6 @@ namespace FC\Resque;
 use Exception;
 use FC\Resque\Job\DirtyExitException;
 use FC\Resque\Job\JobStatus;
-use FC\Resque\Resque;
-use Psr\Log\LogLevel;
 
 /**
  * Resque worker that handles checking queues for jobs, fetching them
@@ -21,7 +19,7 @@ class ResqueWorker
 	/**
 	* @var ResqueLogger Logging object that impliments the PSR-3 LoggerInterface
 	*/
-	public $logger;
+	private $logger;
 
 	/**
 	 * @var array Array of all associated queues for this worker.

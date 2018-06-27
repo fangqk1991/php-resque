@@ -2,10 +2,7 @@
 
 namespace FC\Resque;
 
-use Psr\Log\AbstractLogger;
-use Psr\Log\LogLevel;
-
-class ResqueLogger extends AbstractLogger
+class ResqueLogger
 {
 	public $verbose;
 
@@ -13,13 +10,6 @@ class ResqueLogger extends AbstractLogger
 		$this->verbose = $verbose;
 	}
 
-	/**
-	 * Logs with an arbitrary level.
-	 *
-	 * @param mixed   $level    PSR-3 log level constant, or equivalent string
-	 * @param string  $message  Message to log, may contain a { placeholder }
-	 * @param array   $context  Variables to replace { placeholder }
-	 */
 	public function log($level, $message, array $context = array())
 	{
 		if ($this->verbose) {
@@ -38,14 +28,6 @@ class ResqueLogger extends AbstractLogger
 		}
 	}
 
-	/**
-	 * Fill placeholders with the provided context
-	 * @author Jordi Boggiano j.boggiano@seld.be
-	 * 
-	 * @param  string  $message  Message to be logged
-	 * @param  array   $context  Array of variables to use in message
-	 * @return string
-	 */
 	public function interpolate($message, array $context = array())
 	{
 		// build a replacement array with braces around the context keys
