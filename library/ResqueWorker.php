@@ -492,11 +492,6 @@ class ResqueWorker
 		}
 	}
 
-	public function getStat($stat)
-	{
-		return Stat::get($stat . ':' . $this);
-	}
-
 	public function setLogger(ResqueLogger $logger)
 	{
 		$this->logger = $logger;
