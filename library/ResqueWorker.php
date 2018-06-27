@@ -172,7 +172,6 @@ class ResqueWorker
 			}
 
 			$this->logger->log(LogLevel::NOTICE, 'Starting work on {job}', array('job' => $job));
-			Event::trigger('beforeFork', $job);
 			$this->workingOn($job);
 
 			$this->child = Resque::fork();
@@ -219,7 +218,6 @@ class ResqueWorker
 	public function perform(ResqueJob $job)
 	{
 		try {
-			Event::trigger('afterFork', $job);
 			$job->perform();
 		}
 		catch(Exception $e) {
@@ -280,7 +278,6 @@ class ResqueWorker
 	{
 		$this->registerSigHandlers();
 		$this->pruneDeadWorkers();
-		Event::trigger('beforeFirstFork', $this);
 		$this->registerWorker();
 	}
 
@@ -442,7 +439,7 @@ class ResqueWorker
 	public function unregisterWorker()
 	{
 		if(is_object($this->currentJob)) {
-			$this->currentJob->fail(new DirtyExitException);
+			$this->currentJob->fail(new DirtyExitException());
 		}
 
 		$id = (string)$this;

@@ -175,8 +175,6 @@ class ResqueJob
 	 */
 	public function perform()
 	{
-        Event::trigger('beforePerform', $this);
-
         $instance = $this->getInstance();
         if(method_exists($instance, 'setUp')) {
             $instance->setUp();
@@ -188,8 +186,6 @@ class ResqueJob
             $instance->tearDown();
         }
 
-        Event::trigger('afterPerform', $this);
-
 		return true;
 	}
 
@@ -200,11 +196,6 @@ class ResqueJob
 	 */
 	public function fail($exception)
 	{
-		Event::trigger('onFailure', array(
-			'exception' => $exception,
-			'job' => $this,
-		));
-
 		$this->updateStatus(JobStatus::STATUS_FAILED);
 		Failure::create(
 			$this->payload,

@@ -198,9 +198,7 @@ class Resque
 			'id'    => $id,
 		);
 
-        Event::trigger('beforeEnqueue', $hookParams);
 		ResqueJob::create($queue, $class, $args, $trackStatus, $id);
-        Event::trigger('afterEnqueue', $hookParams);
 
 		return $id;
 	}
