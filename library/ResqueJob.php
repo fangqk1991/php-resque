@@ -76,23 +76,6 @@ class ResqueJob
 	}
 
 	/**
-	 * Find the next available job from the specified queue and return an
-	 * instance of Resque_Job for it.
-	 *
-	 * @param string $queue The name of the queue to check for a job in.
-	 * @return false|object Null when there aren't any waiting jobs, instance of Resque_Job when a job was found.
-	 */
-	public static function reserve($queue)
-	{
-		$payload = Resque::pop($queue);
-		if(!is_array($payload)) {
-			return false;
-		}
-
-		return new ResqueJob($queue, $payload);
-	}
-
-	/**
 	 * Find the next available job from the specified queues using blocking list pop
 	 * and return an instance of Resque_Job for it.
 	 *
@@ -101,7 +84,7 @@ class ResqueJob
 	 */
 	public static function reserveBlocking(array $queues)
 	{
-		$item = Resque::blpop($queues, Resque::DEFAULT_INTERVAL);
+		$item = Resque::blpop($queues, Resque::kTimeout);
 
 		if(!is_array($item)) {
 			return false;

@@ -7,9 +7,8 @@ use RuntimeException;
 
 class Resque
 {
-	const VERSION = '1.3';
-
-    const DEFAULT_INTERVAL = 5;
+	const kVersion = '1.3';
+    const kTimeout = 5;
 
 	public static $redis = null;
 	protected static $redisServer = null;
@@ -201,17 +200,6 @@ class Resque
 		ResqueJob::create($queue, $class, $args, $trackStatus, $id);
 
 		return $id;
-	}
-
-	/**
-	 * Reserve and return the next available job in the specified queue.
-	 *
-	 * @param string $queue Queue to fetch next available job from.
-	 * @return false|ResqueJob|object
-	 */
-	public static function reserve($queue)
-	{
-		return ResqueJob::reserve($queue);
 	}
 
 	/**

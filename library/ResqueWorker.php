@@ -290,7 +290,7 @@ class ResqueWorker
 	 */
 	private function updateProcLine($status)
 	{
-		$processTitle = 'resque-' . Resque::VERSION . ': ' . $status;
+		$processTitle = 'resque-' . Resque::kVersion . ': ' . $status;
 		if(function_exists('cli_set_process_title') && PHP_OS !== 'Darwin') {
 			cli_set_process_title($processTitle);
 		}
