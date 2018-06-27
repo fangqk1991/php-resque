@@ -7,7 +7,7 @@ use FC\Resque\Job\IJobFactory;
 use FC\Resque\Job\JobFactory;
 use FC\Resque\Job\JobStatus;
 
-class Job
+class ResqueJob
 {
 	/**
 	 * @var string The name of the queue that this job belongs to.
@@ -97,7 +97,7 @@ class Job
 			return false;
 		}
 
-		return new Job($queue, $payload);
+		return new ResqueJob($queue, $payload);
 	}
 
 	/**
@@ -116,7 +116,7 @@ class Job
 			return false;
 		}
 
-		return new Job($item['queue'], $item['payload']);
+		return new ResqueJob($item['queue'], $item['payload']);
 	}
 
 	/**
@@ -268,7 +268,7 @@ class Job
 
 	/**
 	 * @param IJobFactory $jobFactory
-	 * @return Job
+	 * @return ResqueJob
 	 */
 	public function setJobFactory(IJobFactory $jobFactory)
 	{

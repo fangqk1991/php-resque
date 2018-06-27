@@ -49,7 +49,7 @@ class ResqueWorker
 	private $id;
 
 	/**
-	 * @var Job Current job, if any, being processed by this worker.
+	 * @var ResqueJob Current job, if any, being processed by this worker.
 	 */
 	private $currentJob = null;
 
@@ -238,9 +238,9 @@ class ResqueWorker
 	/**
 	 * Process a single job.
 	 *
-	 * @param Job $job The job to be processed.
+	 * @param ResqueJob $job The job to be processed.
 	 */
-	public function perform(Job $job)
+	public function perform(ResqueJob $job)
 	{
 		try {
 			Event::trigger('afterFork', $job);
@@ -269,7 +269,7 @@ class ResqueWorker
 		}
 
 		if($blocking === true) {
-			$job = Job::reserveBlocking($queues, $timeout);
+			$job = ResqueJob::reserveBlocking($queues, $timeout);
 			if($job) {
 				$this->logger->log(LogLevel::INFO, 'Found job on {queue}', array('queue' => $job->queue));
 				return $job;
@@ -277,7 +277,7 @@ class ResqueWorker
 		} else {
 			foreach($queues as $queue) {
 				$this->logger->log(LogLevel::INFO, 'Checking {queue} for jobs', array('queue' => $queue));
-				$job = Job::reserve($queue);
+				$job = ResqueJob::reserve($queue);
 				if($job) {
 					$this->logger->log(LogLevel::INFO, 'Found job on {queue}', array('queue' => $job->queue));
 					return $job;
@@ -495,7 +495,7 @@ class ResqueWorker
 	 *
 	 * @param object $job Resque_Job instance containing the job we're working on.
 	 */
-	public function workingOn(Job $job)
+	public function workingOn(ResqueJob $job)
 	{
 		$job->worker = $this;
 		$this->currentJob = $job;

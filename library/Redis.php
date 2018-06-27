@@ -263,7 +263,7 @@ class Redis
 
 	public static function removePrefix($string)
 	{
-	    $prefix=self::getPrefix();
+	    $prefix = self::getPrefix();
 
 	    if (substr($string, 0, strlen($prefix)) == $prefix) {
 	        $string = substr($string, strlen($prefix), strlen($string) );
