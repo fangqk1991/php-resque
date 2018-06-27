@@ -3,8 +3,6 @@
 namespace FC\Resque;
 
 use FC\Resque\Job\DontPerformException;
-use FC\Resque\Job\IJobFactory;
-use FC\Resque\Job\JobFactory;
 use FC\Resque\Job\JobStatus;
 
 class ResqueJob
@@ -28,11 +26,6 @@ class ResqueJob
 	 * @var object|IResqueTask Instance of the class performing work for this job.
 	 */
 	private $instance;
-
-	/**
-	 * @var IJobFactory
-	 */
-	private $jobFactory;
 
 	/**
 	 * Instantiate a new instance of a job.
@@ -170,7 +163,7 @@ class ResqueJob
 			return $this->instance;
 		}
 
-        $this->instance = $this->getJobFactory()->create($this->payload['class'], $this->getArguments(), $this->queue);
+        $this->instance = TaskBase::create($this->payload['class'], $this->getArguments(), $this->queue);
         $this->instance->job = $this;
         return $this->instance;
 	}
@@ -265,26 +258,4 @@ class ResqueJob
 		}
 		return '(' . implode(' | ', $name) . ')';
 	}
-
-	/**
-	 * @param IJobFactory $jobFactory
-	 * @return ResqueJob
-	 */
-	public function setJobFactory(IJobFactory $jobFactory)
-	{
-		$this->jobFactory = $jobFactory;
-
-		return $this;
-	}
-
-    /**
-     * @return IJobFactory
-     */
-    public function getJobFactory()
-    {
-        if ($this->jobFactory === null) {
-            $this->jobFactory = new JobFactory();
-        }
-        return $this->jobFactory;
-    }
 }

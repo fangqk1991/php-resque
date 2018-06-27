@@ -33,6 +33,6 @@ foreach ($includes as $file)
 
 $worker = new \FC\Resque\ResqueWorker($queues);
 fwrite(STDOUT, '*** Starting worker '.$worker."\n");
-$worker->work(120, TRUE);
+$worker->work(Resque::DEFAULT_INTERVAL, TRUE);
 
 
