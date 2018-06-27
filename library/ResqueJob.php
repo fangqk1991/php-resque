@@ -2,7 +2,6 @@
 
 namespace FC\Resque;
 
-use FC\Resque\Job\DontPerformException;
 use FC\Resque\Job\JobStatus;
 
 class ResqueJob
@@ -177,26 +176,20 @@ class ResqueJob
 	 */
 	public function perform()
 	{
-		try {
-            Event::trigger('beforePerform', $this);
+        Event::trigger('beforePerform', $this);
 
-			$instance = $this->getInstance();
-			if(method_exists($instance, 'setUp')) {
-				$instance->setUp();
-			}
+        $instance = $this->getInstance();
+        if(method_exists($instance, 'setUp')) {
+            $instance->setUp();
+        }
 
-			$instance->perform();
+        $instance->perform();
 
-			if(method_exists($instance, 'tearDown')) {
-				$instance->tearDown();
-			}
+        if(method_exists($instance, 'tearDown')) {
+            $instance->tearDown();
+        }
 
-			Event::trigger('afterPerform', $this);
-		}
-		// beforePerform/setUp have said don't perform this job. Return.
-		catch(DontPerformException $e) {
-			return false;
-		}
+        Event::trigger('afterPerform', $this);
 
 		return true;
 	}
