@@ -2,8 +2,6 @@
 
 namespace FC\Resque;
 
-use FC\Resque\Job\DontCreateException;
-
 class Resque
 {
 	const VERSION = '1.3';
@@ -196,13 +194,8 @@ class Resque
 			'queue' => $queue,
 			'id'    => $id,
 		);
-		try {
-			Event::trigger('beforeEnqueue', $hookParams);
-		}
-		catch(DontCreateException $e) {
-			return false;
-		}
 
+        Event::trigger('beforeEnqueue', $hookParams);
 		ResqueJob::create($queue, $class, $args, $trackStatus, $id);
         Event::trigger('afterEnqueue', $hookParams);
 
