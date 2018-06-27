@@ -2,7 +2,7 @@
 
 namespace FC\Resque;
 
-interface IJob
+interface IResqueTask
 {
 	/**
 	 * @return bool

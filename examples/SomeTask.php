@@ -4,9 +4,9 @@ namespace FC\Example;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use \FC\Resque\ResqueTaskBase;
+use \FC\Resque\TaskBase;
 
-class SomeTask extends ResqueTaskBase
+class SomeTask extends TaskBase
 {
     public function myTask($params)
     {

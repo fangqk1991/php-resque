@@ -4,9 +4,18 @@ namespace FC\Resque;
 
 use Exception;
 
-abstract class ResqueTaskBase
+abstract class TaskBase implements IResqueTask
 {
     public abstract function myTask($params);
+
+    protected $queue;
+    protected $args;
+
+    public function init($queue, $args)
+    {
+        $this->queue = $queue;
+        $this->args = $args;
+    }
 
     public function perform()
     {

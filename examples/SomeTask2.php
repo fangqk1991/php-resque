@@ -2,9 +2,9 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use \FC\Resque\ResqueTaskBase;
+use \FC\Resque\TaskBase;
 
-class SomeTask2 extends ResqueTaskBase
+class SomeTask2 extends TaskBase
 {
     public function myTask($params)
     {

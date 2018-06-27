@@ -25,7 +25,7 @@ class ResqueJob
 	public $payload;
 
 	/**
-	 * @var object|IJob Instance of the class performing work for this job.
+	 * @var object|IResqueTask Instance of the class performing work for this job.
 	 */
 	private $instance;
 
@@ -161,7 +161,7 @@ class ResqueJob
 
 	/**
 	 * Get the instantiated object for this job that will be performing work.
-	 * @return IJob Instance of the object that this job belongs to.
+	 * @return IResqueTask Instance of the object that this job belongs to.
 	 * @throws ResqueException
 	 */
 	public function getInstance()
