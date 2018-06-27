@@ -13,8 +13,7 @@
   "autoload": {
     "psr-4": {
       "FC\\Resque\\": "library/",
-      "FC\\Resque\\Job\\": "library/Job/",
-      "FC\\Resque\\Failure\\": "library/Failure/"
+      "FC\\Resque\\Job\\": "library/Job/"
     }
   },
   "require": {

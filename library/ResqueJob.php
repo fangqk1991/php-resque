@@ -2,6 +2,7 @@
 
 namespace FC\Resque;
 
+use FC\Resque\Job\FailureJob;
 use FC\Resque\Job\JobStatus;
 
 class ResqueJob
@@ -180,11 +181,11 @@ class ResqueJob
 	public function fail($exception)
 	{
 		$this->updateStatus(JobStatus::STATUS_FAILED);
-		Failure::create(
-			$this->payload,
+		FailureJob::create(
 			$exception,
 			$this->worker,
-			$this->queue
+			$this->queue,
+            $this->payload
 		);
 		Stat::incr('failed');
         Stat::incr('failed:' . $this->worker->getId());
