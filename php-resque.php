@@ -34,6 +34,6 @@ foreach ($includes as $file)
 
 $worker = new ResqueWorker($queues);
 fwrite(STDOUT, '*** Starting worker '.$worker."\n");
-$worker->work(50, TRUE);
+$worker->work();
 
 

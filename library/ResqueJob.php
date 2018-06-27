@@ -97,12 +97,11 @@ class ResqueJob
 	 * and return an instance of Resque_Job for it.
 	 *
 	 * @param array             $queues
-	 * @param int               $timeout
 	 * @return false|object Null when there aren't any waiting jobs, instance of Resque_Job when a job was found.
 	 */
-	public static function reserveBlocking(array $queues, $timeout = null)
+	public static function reserveBlocking(array $queues)
 	{
-		$item = Resque::blpop($queues, $timeout);
+		$item = Resque::blpop($queues, Resque::DEFAULT_INTERVAL);
 
 		if(!is_array($item)) {
 			return false;
