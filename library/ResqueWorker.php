@@ -17,7 +17,7 @@ use FC\Resque\Job\JobStatus;
 class ResqueWorker
 {
 	/**
-	* @var ResqueLogger Logging object that impliments the PSR-3 LoggerInterface
+	* @var ResqueLogger
 	*/
 	private $logger;
 
@@ -149,7 +149,6 @@ class ResqueWorker
 	 */
 	public function work()
 	{
-		$this->updateProcLine('Starting');
 		$this->startup();
 
 		while(true) {
@@ -162,8 +161,6 @@ class ResqueWorker
 			if(!$this->paused) {
 
                 $this->logger->log(LogLevel::INFO, 'Starting blocking');
-                $this->updateProcLine('Waiting for ' . implode(',', $this->queues));
-
 				$job = $this->reserve();
 			}
 
@@ -179,7 +176,6 @@ class ResqueWorker
 			// Forked and we're the child. Run the job.
 			if ($this->child === 0 || $this->child === false) {
 				$status = 'Processing ' . $job->queue . ' since ' . strftime('%F %T');
-				$this->updateProcLine($status);
 				$this->logger->log(LogLevel::INFO, $status);
 				$this->perform($job);
 				if ($this->child === 0) {
@@ -190,7 +186,6 @@ class ResqueWorker
 			if($this->child > 0) {
 				// Parent process, sit and wait
 				$status = 'Forked ' . $this->child . ' at ' . strftime('%F %T');
-				$this->updateProcLine($status);
 				$this->logger->log(LogLevel::INFO, $status);
 
 				// Wait until the child process finishes before continuing
@@ -279,24 +274,6 @@ class ResqueWorker
 		$this->registerSigHandlers();
 		$this->pruneDeadWorkers();
 		$this->registerWorker();
-	}
-
-	/**
-	 * On supported systems (with the PECL proctitle module installed), update
-	 * the name of the currently running process to indicate the current state
-	 * of a worker.
-	 *
-	 * @param string $status The updated process title.
-	 */
-	private function updateProcLine($status)
-	{
-		$processTitle = 'resque-' . Resque::kVersion . ': ' . $status;
-		if(function_exists('cli_set_process_title') && PHP_OS !== 'Darwin') {
-			cli_set_process_title($processTitle);
-		}
-		else if(function_exists('setproctitle')) {
-			setproctitle($processTitle);
-		}
 	}
 
 	/**
