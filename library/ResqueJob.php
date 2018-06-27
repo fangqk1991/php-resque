@@ -187,7 +187,7 @@ class ResqueJob
 			$this->queue
 		);
 		Stat::incr('failed');
-        Stat::incr('failed:' . $this->worker);
+        Stat::incr('failed:' . $this->worker->getId());
 	}
 
 	/**

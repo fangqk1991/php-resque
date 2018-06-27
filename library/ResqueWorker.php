@@ -44,7 +44,7 @@ class ResqueWorker
 	/**
 	 * @var string String identifying this worker.
 	 */
-	private $id;
+	private $_id;
 
 	/**
 	 * @var ResqueJob Current job, if any, being processed by this worker.
@@ -78,7 +78,7 @@ class ResqueWorker
         $this->queues = $queues;
         $this->hostname = php_uname('n');
 
-        $this->id = $this->hostname . ':'.getmypid() . ':' . implode(',', $this->queues);
+        $this->_id = $this->hostname . ':'.getmypid() . ':' . implode(',', $this->queues);
     }
 
 	/**
@@ -129,15 +129,15 @@ class ResqueWorker
 		return $worker;
 	}
 
-	/**
-	 * Set the ID of this worker to a given ID string.
-	 *
-	 * @param string $workerId ID for the worker.
-	 */
-	public function setId($workerId)
-	{
-		$this->id = $workerId;
-	}
+    public function setId($workerId)
+    {
+        $this->_id = $workerId;
+    }
+
+    public function getId()
+    {
+        return $this->_id;
+    }
 
 	/**
 	 * The primary loop for a worker which when called on an instance starts
@@ -373,13 +373,15 @@ class ResqueWorker
 	{
 		$workerPids = $this->workerPids();
 		$workers = self::all();
-		foreach($workers as $worker) {
-			if (is_object($worker)) {
-				list($host, $pid, $queues) = explode(':', (string)$worker, 3);
+		foreach($workers as $worker)
+		{
+			if ($worker instanceof self)
+			{
+				list($host, $pid, $queues) = explode(':', $worker->getId(), 3);
 				if($host != $this->hostname || in_array($pid, $workerPids) || $pid == getmypid()) {
 					continue;
 				}
-				$this->logger->log(LogLevel::INFO, 'Pruning dead worker: {worker}', array('worker' => (string)$worker));
+				$this->logger->log(LogLevel::INFO, 'Pruning dead worker: {worker}', array('worker' => $worker->getId()));
 				$worker->unregisterWorker();
 			}
 		}
@@ -406,8 +408,8 @@ class ResqueWorker
 	 */
 	public function registerWorker()
 	{
-		Resque::redis()->sadd('resque:workers', (string)$this);
-		Resque::redis()->set('resque:worker:' . (string)$this . ':started', strftime('%a %b %d %H:%M:%S %Z %Y'));
+		Resque::redis()->sadd('resque:workers', $this->_id);
+		Resque::redis()->set('resque:worker:' . $this->_id . ':started', strftime('%a %b %d %H:%M:%S %Z %Y'));
 	}
 
 	/**
@@ -419,7 +421,7 @@ class ResqueWorker
 			$this->currentJob->fail(new DirtyExitException());
 		}
 
-		$id = (string)$this;
+		$id = $this->_id;
 		Resque::redis()->srem('resque:workers', $id);
 		Resque::redis()->del('resque:worker:' . $id);
 		Resque::redis()->del('resque:worker:' . $id . ':started');
@@ -442,25 +444,20 @@ class ResqueWorker
 			'run_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
 			'payload' => $job->payload
 		));
-		Resque::redis()->set('resque:worker:' . $job->worker, $data);
+		Resque::redis()->set('resque:worker:' . $job->worker->getId(), $data);
 	}
 
 	public function doneWorking()
 	{
 		$this->currentJob = null;
         Stat::incr('processed');
-		Stat::incr('processed:' . (string)$this);
-		Resque::redis()->del('resque:worker:' . (string)$this);
-	}
-
-	public function __toString()
-	{
-		return $this->id;
+		Stat::incr('processed:' . $this->getId());
+		Resque::redis()->del('resque:worker:' . $this->getId());
 	}
 
 	public function job()
 	{
-		$job = Resque::redis()->get('resque:worker:' . $this);
+		$job = Resque::redis()->get('resque:worker:' . $this->_id);
 		if(!$job) {
 			return array();
 		}

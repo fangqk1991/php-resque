@@ -33,7 +33,7 @@ foreach ($includes as $file)
 }
 
 $worker = new ResqueWorker($queues);
-fwrite(STDOUT, '*** Starting worker '.$worker."\n");
+fwrite(STDOUT, '*** Starting worker ' . $worker->getId() . "\n");
 $worker->work();
 
 

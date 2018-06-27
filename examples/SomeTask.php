@@ -10,9 +10,10 @@ class SomeTask extends TaskBase
 {
     public function myTask($params)
     {
-        echo sprintf("%s %s %s\n", date('Y-m-d H:i:s'), __CLASS__, __FUNCTION__);
+        echo sprintf("%s %s %s start..\n", date('Y-m-d H:i:s'), __CLASS__, __FUNCTION__);
         echo json_encode($params) . "\n";
-        sleep(10);
+        sleep(1);
+        echo sprintf("%s %s %s end!\n", date('Y-m-d H:i:s'), __CLASS__, __FUNCTION__);
     }
 
     public function onException(\Exception $e)
