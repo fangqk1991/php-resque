@@ -56,14 +56,14 @@ class ResqueJob
 			$id = Resque::generateJobId();
 		}
 
-		if($args !== null && !is_array($args)) {
+		if(!is_array($args)) {
 			throw new \InvalidArgumentException(
 				'Supplied $args must be an array.'
 			);
 		}
 		Resque::push($queue, array(
 			'class'	=> $class,
-			'args'	=> array($args),
+			'args'	=> $args,
 			'id'	=> $id,
 			'queue_time' => microtime(true),
 		));
@@ -130,7 +130,7 @@ class ResqueJob
 			return array();
 		}
 
-		return $this->payload['args'][0];
+		return $this->payload['args'];
 	}
 
 	/**

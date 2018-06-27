@@ -161,7 +161,7 @@ class Resque
 
 	    return array(
             'queue'   => $queue,
-            'payload' => json_decode($item[1], true)
+            'payload' => json_decode($item[1], TRUE)
 	    );
 	}
 
@@ -189,16 +189,8 @@ class Resque
 	 */
 	public static function enqueue($queue, $class, $args = null, $trackStatus = false)
 	{
-		$id         = Resque::generateJobId();
-		$hookParams = array(
-			'class' => $class,
-			'args'  => $args,
-			'queue' => $queue,
-			'id'    => $id,
-		);
-
+		$id = Resque::generateJobId();
 		ResqueJob::create($queue, $class, $args, $trackStatus, $id);
-
 		return $id;
 	}
 
