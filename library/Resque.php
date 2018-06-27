@@ -2,6 +2,9 @@
 
 namespace FC\Resque;
 
+use Redis;
+use RuntimeException;
+
 class Resque
 {
 	const VERSION = '1.3';
@@ -25,12 +28,11 @@ class Resque
 			return self::$redis;
 		}
 
-		if (is_callable(self::$redisServer)) {
-			self::$redis = call_user_func(self::$redisServer, self::$redisDatabase);
-		} else {
-			self::$redis = new Redis(self::$redisServer, self::$redisDatabase);
-		}
+		$redis = new Redis();
+		list($host, $port) = explode(':', self::$redisServer);
+		$redis->connect($host, $port);
 
+        self::$redis = $redis;
 		return self::$redis;
 	}
 
@@ -55,7 +57,7 @@ class Resque
 
 		$pid = pcntl_fork();
 		if($pid === -1) {
-			throw new \RuntimeException('Unable to fork child worker.');
+			throw new RuntimeException('Unable to fork child worker.');
 		}
 
 		return $pid;
@@ -74,8 +76,9 @@ class Resque
 		if ($encodedItem === false) {
 			return false;
 		}
-		self::redis()->sadd('queues', $queue);
-		$length = self::redis()->rpush('queue:' . $queue, $encodedItem);
+
+		self::redis()->sAdd('resque:queues', $queue);
+		$length = self::redis()->rpush('resque:queue:' . $queue, $encodedItem);
 		if ($length < 1) {
 			return false;
 		}
@@ -91,7 +94,7 @@ class Resque
 	 */
 	public static function pop($queue)
 	{
-        $item = self::redis()->lpop('queue:' . $queue);
+        $item = self::redis()->lpop('resque:queue:' . $queue);
 
 		if(!$item) {
 			return;
@@ -125,7 +128,7 @@ class Resque
 	public static function removeQueue($queue)
 	{
 	    $num = self::removeList($queue);
-	    self::redis()->srem('queues', $queue);
+	    self::redis()->srem('resque:queues', $queue);
 	    return $num;
 	}
 
@@ -141,13 +144,13 @@ class Resque
 	{
 	    $list = array();
 	    foreach($queues AS $queue) {
-		$list[] = 'queue:' . $queue;
+		    $list[] = 'resque:queue:' . $queue;
 	    }
 
 	    $item = self::redis()->blpop($list, (int)$timeout);
 
 	    if(!$item) {
-		return;
+		    return;
 	    }
 
 	    /**
@@ -155,11 +158,11 @@ class Resque
 	     * But the blpop is a bit different. It returns the name as prefix:queue:name
 	     * So we need to strip off the prefix:queue: part
 	     */
-	    $queue = substr($item[0], strlen(self::redis()->getPrefix() . 'queue:'));
+	    $queue = substr($item[0], strlen('resque:queue:'));
 
 	    return array(
-		'queue'   => $queue,
-		'payload' => json_decode($item[1], true)
+            'queue'   => $queue,
+            'payload' => json_decode($item[1], true)
 	    );
 	}
 
@@ -172,7 +175,7 @@ class Resque
 	 */
 	public static function size($queue)
 	{
-		return self::redis()->llen('queue:' . $queue);
+		return self::redis()->llen('resque:queue:' . $queue);
 	}
 
 	/**
@@ -220,7 +223,7 @@ class Resque
 	 */
 	public static function queues()
 	{
-		$queues = self::redis()->smembers('queues');
+		$queues = self::redis()->smembers('resque:queues');
 		if(!is_array($queues)) {
 			$queues = array();
 		}
@@ -242,21 +245,21 @@ class Resque
 	private static function removeItems($queue, $items = Array())
 	{
 		$counter = 0;
-		$originalQueue = 'queue:'. $queue;
+		$originalQueue = 'resque:queue:'. $queue;
 		$tempQueue = $originalQueue. ':temp:'. time();
 		$requeueQueue = $tempQueue. ':requeue';
 
 		// move each item from original queue to temp queue and process it
 		$finished = false;
 		while (!$finished) {
-			$string = self::redis()->rpoplpush($originalQueue, self::redis()->getPrefix() . $tempQueue);
+			$string = self::redis()->rpoplpush($originalQueue, $tempQueue);
 
 			if (!empty($string)) {
 				if(self::matchItem($string, $items)) {
 					self::redis()->rpop($tempQueue);
 					$counter++;
 				} else {
-					self::redis()->rpoplpush($tempQueue, self::redis()->getPrefix() . $requeueQueue);
+					self::redis()->rpoplpush($tempQueue, $requeueQueue);
 				}
 			} else {
 				$finished = true;
@@ -266,7 +269,7 @@ class Resque
 		// move back from temp queue to original queue
 		$finished = false;
 		while (!$finished) {
-			$string = self::redis()->rpoplpush($requeueQueue, self::redis()->getPrefix() .$originalQueue);
+			$string = self::redis()->rpoplpush($requeueQueue, $originalQueue);
 			if (empty($string)) {
 			    $finished = true;
 			}
@@ -327,7 +330,7 @@ class Resque
 	private static function removeList($queue)
 	{
 	    $counter = self::size($queue);
-	    $result = self::redis()->del('queue:' . $queue);
+	    $result = self::redis()->del('resque:queue:' . $queue);
 	    return ($result == 1) ? $counter : 0;
 	}
 

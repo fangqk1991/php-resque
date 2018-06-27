@@ -53,7 +53,7 @@ class JobStatus
 			'updated' => time(),
 			'started' => time(),
 		);
-		Resque::redis()->set('job:' . $id . ':status', json_encode($statusPacket));
+		Resque::redis()->set('resque:job:' . $id . ':status', json_encode($statusPacket));
 	}
 
 	/**
@@ -135,6 +135,6 @@ class JobStatus
 	 */
 	public function __toString()
 	{
-		return 'job:' . $this->id . ':status';
+		return 'resque:job:' . $this->id . ':status';
 	}
 }

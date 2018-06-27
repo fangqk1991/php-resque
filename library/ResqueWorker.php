@@ -89,7 +89,7 @@ class ResqueWorker
 	 */
 	public static function all()
 	{
-		$workers = Resque::redis()->smembers('workers');
+		$workers = Resque::redis()->smembers('resque:workers');
 		if(!is_array($workers)) {
 			$workers = array();
 		}
@@ -109,7 +109,7 @@ class ResqueWorker
 	 */
 	public static function exists($workerId)
 	{
-		return (bool)Resque::redis()->sismember('workers', $workerId);
+		return (bool)Resque::redis()->sismember('resque:workers', $workerId);
 	}
 
 	/**
@@ -469,8 +469,8 @@ class ResqueWorker
 	 */
 	public function registerWorker()
 	{
-		Resque::redis()->sadd('workers', (string)$this);
-		Resque::redis()->set('worker:' . (string)$this . ':started', strftime('%a %b %d %H:%M:%S %Z %Y'));
+		Resque::redis()->sadd('resque:workers', (string)$this);
+		Resque::redis()->set('resque:worker:' . (string)$this . ':started', strftime('%a %b %d %H:%M:%S %Z %Y'));
 	}
 
 	/**
@@ -483,9 +483,9 @@ class ResqueWorker
 		}
 
 		$id = (string)$this;
-		Resque::redis()->srem('workers', $id);
-		Resque::redis()->del('worker:' . $id);
-		Resque::redis()->del('worker:' . $id . ':started');
+		Resque::redis()->srem('resque:workers', $id);
+		Resque::redis()->del('resque:worker:' . $id);
+		Resque::redis()->del('resque:worker:' . $id . ':started');
 		Stat::clear('processed:' . $id);
         Stat::clear('failed:' . $id);
 	}
@@ -505,7 +505,7 @@ class ResqueWorker
 			'run_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
 			'payload' => $job->payload
 		));
-		Resque::redis()->set('worker:' . $job->worker, $data);
+		Resque::redis()->set('resque:worker:' . $job->worker, $data);
 	}
 
 	public function doneWorking()
@@ -513,7 +513,7 @@ class ResqueWorker
 		$this->currentJob = null;
         Stat::incr('processed');
 		Stat::incr('processed:' . (string)$this);
-		Resque::redis()->del('worker:' . (string)$this);
+		Resque::redis()->del('resque:worker:' . (string)$this);
 	}
 
 	public function __toString()
@@ -523,7 +523,7 @@ class ResqueWorker
 
 	public function job()
 	{
-		$job = Resque::redis()->get('worker:' . $this);
+		$job = Resque::redis()->get('resque:worker:' . $this);
 		if(!$job) {
 			return array();
 		}
