@@ -1,5 +1,7 @@
 <?php
 
+declare(ticks = 1);
+
 namespace FC\Resque;
 
 use Exception;
@@ -19,7 +21,6 @@ class ResqueWorker
 	private $_queues = array();
 
 	private $_shutdown = false;
-	private $_paused = false;
 
 	private $_id;
 
@@ -107,10 +108,7 @@ class ResqueWorker
 				break;
 			}
 
-			$job = NULL;
-			if(!$this->_paused) {
-				$job = $this->reserve();
-			}
+            $job = $this->reserve();
 
 			if(!$job) {
 				continue;
@@ -227,34 +225,9 @@ class ResqueWorker
 		pcntl_signal(SIGINT, array($this, 'shutDownNow'));
 		pcntl_signal(SIGQUIT, array($this, 'shutdown'));
 		pcntl_signal(SIGUSR1, array($this, 'killChild'));
-		pcntl_signal(SIGUSR2, array($this, 'pauseProcessing'));
-		pcntl_signal(SIGCONT, array($this, 'resumeProcessing'));
 
 		if($this->_trigger)
 		    $this->_trigger->onSignalReceived(__FUNCTION__);
-	}
-
-	/**
-	 * Signal handler callback for USR2, pauses processing of new jobs.
-	 */
-	public function pauseProcessing()
-	{
-        if($this->_trigger)
-            $this->_trigger->onSignalReceived(__FUNCTION__);
-
-		$this->_paused = true;
-	}
-
-	/**
-	 * Signal handler callback for CONT, resumes worker allowing it to pick
-	 * up new jobs.
-	 */
-	public function resumeProcessing()
-	{
-        if($this->_trigger)
-            $this->_trigger->onSignalReceived(__FUNCTION__);
-
-		$this->_paused = false;
 	}
 
 	/**
