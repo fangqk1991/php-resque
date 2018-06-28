@@ -81,7 +81,7 @@ class ResqueJob
 	 * and return an instance of Resque_Job for it.
 	 *
 	 * @param array             $queues
-	 * @return false|object Null when there aren't any waiting jobs, instance of Resque_Job when a job was found.
+	 * @return false|ResqueJob Null when there aren't any waiting jobs, instance of Resque_Job when a job was found.
 	 */
 	public static function reserveBlocking(array $queues)
 	{

@@ -6,20 +6,12 @@ use Exception;
 use FC\Resque\Job\DirtyExitException;
 use FC\Resque\Job\JobStatus;
 
-/**
- * Resque worker that handles checking queues for jobs, fetching them
- * off the queues, running them and handling the result.
- *
- * @package		Resque/Worker
- * @author		Chris Boulton <chris@bigcommerce.com>
- * @license		http://www.opensource.org/licenses/mit-license.php
- */
 class ResqueWorker
 {
 	/**
-	* @var ResqueLogger
+	* @var IResqueTrigger
 	*/
-	private $logger;
+	private $_trigger;
 
 	/**
 	 * @var array Array of all associated queues for this worker.
@@ -69,8 +61,6 @@ class ResqueWorker
      */
     public function __construct($queues)
     {
-        $this->logger = new ResqueLogger();
-
         if(!is_array($queues)) {
             $queues = array($queues);
         }
@@ -159,8 +149,9 @@ class ResqueWorker
 			// Attempt to find and reserve a job
 			$job = false;
 			if(!$this->paused) {
+			    if($this->_trigger)
+                    $this->_trigger->onMasterStart();
 
-                $this->logger->log(LogLevel::INFO, 'Starting blocking');
 				$job = $this->reserve();
 			}
 
@@ -168,15 +159,15 @@ class ResqueWorker
 				continue;
 			}
 
-			$this->logger->log(LogLevel::NOTICE, 'Starting work on {job}', array('job' => $job));
 			$this->workingOn($job);
 
 			$this->child = Resque::fork();
 
 			// Forked and we're the child. Run the job.
 			if ($this->child === 0 || $this->child === false) {
-				$status = 'Processing ' . $job->queue . ' since ' . strftime('%F %T');
-				$this->logger->log(LogLevel::INFO, $status);
+                if($this->_trigger)
+                    $this->_trigger->onJobPerform($job);
+
 				$this->perform($job);
 				if ($this->child === 0) {
 					exit(0);
@@ -184,13 +175,14 @@ class ResqueWorker
 			}
 
 			if($this->child > 0) {
-				// Parent process, sit and wait
-				$status = 'Forked ' . $this->child . ' at ' . strftime('%F %T');
-				$this->logger->log(LogLevel::INFO, $status);
+
+                if($this->_trigger)
+                    $this->_trigger->onSalveCreated($this->child);
 
 				// Wait until the child process finishes before continuing
 				pcntl_wait($status);
 				$exitStatus = pcntl_wexitstatus($status);
+
 				if($exitStatus !== 0) {
 					$job->fail(new DirtyExitException(
 						'Job exited with exit code ' . $exitStatus
@@ -216,13 +208,16 @@ class ResqueWorker
 			$job->perform();
 		}
 		catch(Exception $e) {
-			$this->logger->log(LogLevel::CRITICAL, '{job} has failed {stack}', array('job' => $job, 'stack' => $e));
+            if($this->_trigger)
+                $this->_trigger->onJobFailed($job, $e);
 			$job->fail($e);
 			return;
 		}
 
 		$job->updateStatus(JobStatus::STATUS_COMPLETE);
-		$this->logger->log(LogLevel::NOTICE, '{job} has finished', array('job' => $job));
+
+        if($this->_trigger)
+            $this->_trigger->onJobDone($job);
 	}
 
 	/**
@@ -236,8 +231,10 @@ class ResqueWorker
 		}
 
         $job = ResqueJob::reserveBlocking($queues);
-        if($job) {
-            $this->logger->log(LogLevel::INFO, 'Found job on {queue}', array('queue' => $job->queue));
+        if($job instanceof ResqueJob) {
+            if($this->_trigger)
+                $this->_trigger->onJobFound($job);
+
             return $job;
         }
 
@@ -295,8 +292,10 @@ class ResqueWorker
 		pcntl_signal(SIGQUIT, array($this, 'shutdown'));
 		pcntl_signal(SIGUSR1, array($this, 'killChild'));
 		pcntl_signal(SIGUSR2, array($this, 'pauseProcessing'));
-		pcntl_signal(SIGCONT, array($this, 'unPauseProcessing'));
-		$this->logger->log(LogLevel::DEBUG, 'Registered signals');
+		pcntl_signal(SIGCONT, array($this, 'resumeProcessing'));
+
+		if($this->_trigger)
+		    $this->_trigger->onSignalReceived(__FUNCTION__);
 	}
 
 	/**
@@ -304,7 +303,9 @@ class ResqueWorker
 	 */
 	public function pauseProcessing()
 	{
-		$this->logger->log(LogLevel::NOTICE, 'USR2 received; pausing job processing');
+        if($this->_trigger)
+            $this->_trigger->onSignalReceived(__FUNCTION__);
+
 		$this->paused = true;
 	}
 
@@ -312,9 +313,11 @@ class ResqueWorker
 	 * Signal handler callback for CONT, resumes worker allowing it to pick
 	 * up new jobs.
 	 */
-	public function unPauseProcessing()
+	public function resumeProcessing()
 	{
-		$this->logger->log(LogLevel::NOTICE, 'CONT received; resuming job processing');
+        if($this->_trigger)
+            $this->_trigger->onSignalReceived(__FUNCTION__);
+
 		$this->paused = false;
 	}
 
@@ -324,8 +327,10 @@ class ResqueWorker
 	 */
 	public function shutdown()
 	{
+        if($this->_trigger)
+            $this->_trigger->onSignalReceived(__FUNCTION__);
+
 		$this->shutdown = true;
-		$this->logger->log(LogLevel::NOTICE, 'Shutting down');
 	}
 
 	/**
@@ -345,18 +350,23 @@ class ResqueWorker
 	public function killChild()
 	{
 		if(!$this->child) {
-			$this->logger->log(LogLevel::DEBUG, 'No child to kill.');
+            if($this->_trigger)
+                $this->_trigger->onSignalReceived(__FUNCTION__ . ' No child to kill.');
 			return;
 		}
 
-		$this->logger->log(LogLevel::INFO, 'Killing child at {child}', array('child' => $this->child));
+        if($this->_trigger)
+            $this->_trigger->onSignalReceived(__FUNCTION__ . ' Killing child at ' . $this->child);
+
 		if(exec('ps -o pid,state -p ' . $this->child, $output, $returnCode) && $returnCode != 1) {
-			$this->logger->log(LogLevel::DEBUG, 'Child {child} found, killing.', array('child' => $this->child));
+            if($this->_trigger)
+                $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] found, killing.', $this->child));
 			posix_kill($this->child, SIGKILL);
 			$this->child = null;
 		}
 		else {
-			$this->logger->log(LogLevel::INFO, 'Child {child} not found, restarting.', array('child' => $this->child));
+            if($this->_trigger)
+                $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] not found, restarting.', $this->child));
 			$this->shutdown();
 		}
 	}
@@ -381,7 +391,8 @@ class ResqueWorker
 				if($host != $this->hostname || in_array($pid, $workerPids) || $pid == getmypid()) {
 					continue;
 				}
-				$this->logger->log(LogLevel::INFO, 'Pruning dead worker: {worker}', array('worker' => $worker->getId()));
+                if($this->_trigger)
+                    $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Pruning dead worker: %s', $worker->getId()));
 				$worker->unregisterWorker();
 			}
 		}
@@ -464,10 +475,5 @@ class ResqueWorker
 		else {
 			return json_decode($job, true);
 		}
-	}
-
-	public function setLogger(ResqueLogger $logger)
-	{
-		$this->logger = $logger;
 	}
 }
