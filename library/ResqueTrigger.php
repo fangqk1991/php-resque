@@ -8,36 +8,41 @@ class ResqueTrigger implements IResqueTrigger
 {
     public function onMasterStart(ResqueWorker $worker)
     {
-        fwrite(STDOUT, date('Y-m-d H:i:s') . ' *** Starting worker: ' . $worker->getId() . PHP_EOL);
+        $this->log('*** Starting worker: ' . $worker->getId());
     }
 
     public function onJobFound(ResqueJob $job)
     {
-        fwrite(STDOUT, date('Y-m-d H:i:s') . ' | Find job: ' . $job . PHP_EOL);
+        $this->log(__FUNCTION__ . ': ' . $job->getDescription());
     }
 
     public function onJobPerform(ResqueJob $job)
     {
-        // TODO: Implement onJobPerform() method.
+        $this->log(__FUNCTION__ . ': ' . $job->getDescription());
     }
 
     public function onJobDone(ResqueJob $job)
     {
-        // TODO: Implement onJobDone() method.
+        $this->log(__FUNCTION__ . ': ' . $job->getDescription());
     }
 
     public function onJobFailed(ResqueJob $job, Exception $e)
     {
-        // TODO: Implement onJobFailed() method.
+        $this->log(__FUNCTION__ . ': ' . $job->getDescription() . ' ' . $e->getMessage());
     }
 
     public function onSalveCreated($pid)
     {
-        // TODO: Implement onSalveCreated() method.
+        $this->log(__FUNCTION__ . ': ' . $pid);
     }
 
     public function onSignalReceived($msg)
     {
-        fwrite(STDOUT, date('Y-m-d H:i:s') . ' | onSignalReceived: ' . $msg . PHP_EOL);
+        $this->log(__FUNCTION__ . ': ' . $msg);
+    }
+
+    public function log($msg)
+    {
+        fwrite(STDOUT, sprintf('%s %s%s', date('Y-m-d H:i:s'), $msg, PHP_EOL));
     }
 }
