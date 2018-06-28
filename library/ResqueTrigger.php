@@ -8,12 +8,12 @@ class ResqueTrigger implements IResqueTrigger
 {
     public function onMasterStart(ResqueWorker $worker)
     {
-        fwrite(STDOUT, '*** Starting worker ' . $worker->getId() . PHP_EOL);
+        fwrite(STDOUT, date('Y-m-d H:i:s') . ' *** Starting worker: ' . $worker->getId() . PHP_EOL);
     }
 
     public function onJobFound(ResqueJob $job)
     {
-        fwrite(STDOUT, '*** find job ' . $job . PHP_EOL);
+        fwrite(STDOUT, date('Y-m-d H:i:s') . ' | Find job: ' . $job . PHP_EOL);
     }
 
     public function onJobPerform(ResqueJob $job)
@@ -38,6 +38,6 @@ class ResqueTrigger implements IResqueTrigger
 
     public function onSignalReceived($msg)
     {
-        // TODO: Implement onSignalReceived() method.
+        fwrite(STDOUT, date('Y-m-d H:i:s') . ' | onSignalReceived: ' . $msg . PHP_EOL);
     }
 }

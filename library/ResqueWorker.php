@@ -95,14 +95,6 @@ class ResqueWorker
         return $this->_id;
     }
 
-	/**
-	 * The primary loop for a worker which when called on an instance starts
-	 * the worker's life cycle.
-	 *
-	 * Queues are checked every $interval (seconds) for new jobs.
-	 *
-	 * @param int $interval How often to check for new jobs across the queues.
-	 */
 	public function work()
 	{
         if($this->_trigger)
@@ -121,7 +113,6 @@ class ResqueWorker
 			}
 
 			if(!$job) {
-                fwrite(STDOUT, '*** no job ' . PHP_EOL);
 				continue;
 			}
 
@@ -188,12 +179,7 @@ class ResqueWorker
 
 	public function reserve()
 	{
-		$queues = $this->queues();
-		if(!is_array($queues)) {
-			return NULL;
-		}
-
-        $job = ResqueJob::reserveBlocking($queues);
+        $job = ResqueJob::reserveBlocking($this->queues());
         if($job instanceof ResqueJob) {
             if($this->_trigger)
                 $this->_trigger->onJobFound($job);
