@@ -41,7 +41,7 @@ class ResqueTrigger implements IResqueTrigger
         $this->log(__FUNCTION__ . ': ' . $msg);
     }
 
-    public function log($msg)
+    private function log($msg)
     {
         fwrite(STDOUT, sprintf('%s %s%s', date('Y-m-d H:i:s'), $msg, PHP_EOL));
     }

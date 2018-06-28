@@ -10,10 +10,16 @@ class SomeTask extends TaskBase
 {
     public function myTask($params)
     {
-        echo sprintf("%s %s %s start..\n", date('Y-m-d H:i:s'), __CLASS__, __FUNCTION__);
-        echo json_encode($params) . "\n";
-        sleep(1);
-        echo sprintf("%s %s %s end!\n", date('Y-m-d H:i:s'), __CLASS__, __FUNCTION__);
+        echo __CLASS__ . " start \n";
+
+        $delay = intval($params['delay']);
+        while ($delay--)
+        {
+            echo $delay . "\n";
+            sleep(1);
+        }
+
+        echo __CLASS__ . " end \n";
     }
 
     public function onException(\Exception $e)
