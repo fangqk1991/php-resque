@@ -205,6 +205,8 @@ class Resque
 		if(!is_array($queues)) {
 			$queues = array();
 		}
+
+        sort($queues);
 		return $queues;
 	}
 

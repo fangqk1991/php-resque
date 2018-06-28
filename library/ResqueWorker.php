@@ -16,37 +16,18 @@ class ResqueWorker
 	/**
 	 * @var array Array of all associated queues for this worker.
 	 */
-	private $queues = array();
+	private $_queues = array();
 
-	/**
-	 * @var string The hostname of this worker.
-	 */
-	private $hostname;
+	private $_shutdown = false;
+	private $_paused = false;
 
-	/**
-	 * @var boolean True if on the next iteration, the worker should shutdown.
-	 */
-	private $shutdown = false;
-
-	/**
-	 * @var boolean True if this worker is paused.
-	 */
-	private $paused = false;
-
-	/**
-	 * @var string String identifying this worker.
-	 */
 	private $_id;
 
 	/**
-	 * @var ResqueJob Current job, if any, being processed by this worker.
+	 * @var ResqueJob
 	 */
-	private $currentJob = null;
-
-	/**
-	 * @var int Process ID of child worker processes.
-	 */
-	private $child = null;
+	private $_currentJob = null;
+	private $_childPID = null;
 
     /**
      * Instantiate a new worker, given a list of queues that it should be working
@@ -59,16 +40,10 @@ class ResqueWorker
      *
      * @param string|array $queues String with a single queue name, array with multiple.
      */
-    public function __construct($queues)
+    public function __construct(array $queues)
     {
-        if(!is_array($queues)) {
-            $queues = array($queues);
-        }
-
-        $this->queues = $queues;
-        $this->hostname = php_uname('n');
-
-        $this->_id = $this->hostname . ':'.getmypid() . ':' . implode(',', $this->queues);
+        $this->_queues = $queues;
+        $this->_id = php_uname('n') . ':'.getmypid() . ':' . implode(',', $this->_queues);
     }
 
 	/**
@@ -142,13 +117,13 @@ class ResqueWorker
 		$this->startup();
 
 		while(true) {
-			if($this->shutdown) {
+			if($this->_shutdown) {
 				break;
 			}
 
 			// Attempt to find and reserve a job
 			$job = false;
-			if(!$this->paused) {
+			if(!$this->_paused) {
 			    if($this->_trigger)
                     $this->_trigger->onMasterStart();
 
@@ -161,23 +136,23 @@ class ResqueWorker
 
 			$this->workingOn($job);
 
-			$this->child = Resque::fork();
+			$this->_childPID = Resque::fork();
 
 			// Forked and we're the child. Run the job.
-			if ($this->child === 0 || $this->child === false) {
+			if ($this->_childPID === 0 || $this->_childPID === false) {
                 if($this->_trigger)
                     $this->_trigger->onJobPerform($job);
 
 				$this->perform($job);
-				if ($this->child === 0) {
+				if ($this->_childPID === 0) {
 					exit(0);
 				}
 			}
 
-			if($this->child > 0) {
+			if($this->_childPID > 0) {
 
                 if($this->_trigger)
-                    $this->_trigger->onSalveCreated($this->child);
+                    $this->_trigger->onSalveCreated($this->_childPID);
 
 				// Wait until the child process finishes before continuing
 				pcntl_wait($status);
@@ -190,7 +165,7 @@ class ResqueWorker
 				}
 			}
 
-			$this->child = null;
+			$this->_childPID = null;
 			$this->doneWorking();
 		}
 
@@ -241,26 +216,13 @@ class ResqueWorker
         return false;
 	}
 
-	/**
-	 * Return an array containing all of the queues that this worker should use
-	 * when searching for jobs.
-	 *
-	 * If * is found in the list of queues, every queue will be searched in
-	 * alphabetic order. (@see $fetch)
-	 *
-	 * @param boolean $fetch If true, and the queue is set to *, will fetch
-	 * all queue names from redis.
-	 * @return array Array of associated queues.
-	 */
-	public function queues($fetch = true)
+	private function queues()
 	{
-		if(!in_array('*', $this->queues) || $fetch == false) {
-			return $this->queues;
+		if(!in_array('*', $this->_queues)) {
+			return $this->_queues;
 		}
 
-		$queues = Resque::queues();
-		sort($queues);
-		return $queues;
+		return Resque::queues();
 	}
 
 	/**
@@ -306,7 +268,7 @@ class ResqueWorker
         if($this->_trigger)
             $this->_trigger->onSignalReceived(__FUNCTION__);
 
-		$this->paused = true;
+		$this->_paused = true;
 	}
 
 	/**
@@ -318,7 +280,7 @@ class ResqueWorker
         if($this->_trigger)
             $this->_trigger->onSignalReceived(__FUNCTION__);
 
-		$this->paused = false;
+		$this->_paused = false;
 	}
 
 	/**
@@ -330,7 +292,7 @@ class ResqueWorker
         if($this->_trigger)
             $this->_trigger->onSignalReceived(__FUNCTION__);
 
-		$this->shutdown = true;
+		$this->_shutdown = true;
 	}
 
 	/**
@@ -349,24 +311,24 @@ class ResqueWorker
 	 */
 	public function killChild()
 	{
-		if(!$this->child) {
+		if(!$this->_childPID) {
             if($this->_trigger)
                 $this->_trigger->onSignalReceived(__FUNCTION__ . ' No child to kill.');
 			return;
 		}
 
         if($this->_trigger)
-            $this->_trigger->onSignalReceived(__FUNCTION__ . ' Killing child at ' . $this->child);
+            $this->_trigger->onSignalReceived(__FUNCTION__ . ' Killing child at ' . $this->_childPID);
 
-		if(exec('ps -o pid,state -p ' . $this->child, $output, $returnCode) && $returnCode != 1) {
+		if(exec('ps -o pid,state -p ' . $this->_childPID, $output, $returnCode) && $returnCode != 1) {
             if($this->_trigger)
-                $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] found, killing.', $this->child));
-			posix_kill($this->child, SIGKILL);
-			$this->child = null;
+                $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] found, killing.', $this->_childPID));
+			posix_kill($this->_childPID, SIGKILL);
+			$this->_childPID = null;
 		}
 		else {
             if($this->_trigger)
-                $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] not found, restarting.', $this->child));
+                $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] not found, restarting.', $this->_childPID));
 			$this->shutdown();
 		}
 	}
@@ -428,8 +390,8 @@ class ResqueWorker
 	 */
 	public function unregisterWorker()
 	{
-		if(is_object($this->currentJob)) {
-			$this->currentJob->fail(new DirtyExitException());
+		if(is_object($this->_currentJob)) {
+			$this->_currentJob->fail(new DirtyExitException());
 		}
 
 		$id = $this->_id;
@@ -448,7 +410,7 @@ class ResqueWorker
 	public function workingOn(ResqueJob $job)
 	{
 		$job->worker = $this;
-		$this->currentJob = $job;
+		$this->_currentJob = $job;
 		$job->updateStatus(JobStatus::STATUS_RUNNING);
 		$data = json_encode(array(
 			'queue' => $job->queue,
@@ -460,7 +422,7 @@ class ResqueWorker
 
 	public function doneWorking()
 	{
-		$this->currentJob = null;
+		$this->_currentJob = null;
         Stat::incr('processed');
 		Stat::incr('processed:' . $this->getId());
 		Resque::redis()->del('resque:worker:' . $this->getId());
