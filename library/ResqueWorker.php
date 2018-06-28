@@ -29,21 +29,12 @@ class ResqueWorker
 	private $_currentJob = null;
 	private $_childPID = null;
 
-    /**
-     * Instantiate a new worker, given a list of queues that it should be working
-     * on. The list of queues should be supplied in the priority that they should
-     * be checked for jobs (first come, first served)
-     *
-     * Passing a single '*' allows the worker to work on all queues in alphabetical
-     * order. You can easily add new queues dynamically and have them worked on using
-     * this method.
-     *
-     * @param string|array $queues String with a single queue name, array with multiple.
-     */
-    public function __construct(array $queues)
+    public function __construct(array $queues, IResqueTrigger $trigger = NULL)
     {
         $this->_queues = $queues;
         $this->_id = php_uname('n') . ':'.getmypid() . ':' . implode(',', $this->_queues);
+
+        $this->_trigger = $trigger;
     }
 
 	/**
@@ -114,6 +105,9 @@ class ResqueWorker
 	 */
 	public function work()
 	{
+        if($this->_trigger)
+            $this->_trigger->onMasterStart($this);
+
 		$this->startup();
 
 		while(true) {
@@ -121,16 +115,13 @@ class ResqueWorker
 				break;
 			}
 
-			// Attempt to find and reserve a job
-			$job = false;
+			$job = NULL;
 			if(!$this->_paused) {
-			    if($this->_trigger)
-                    $this->_trigger->onMasterStart();
-
 				$job = $this->reserve();
 			}
 
 			if(!$job) {
+                fwrite(STDOUT, '*** no job ' . PHP_EOL);
 				continue;
 			}
 
@@ -195,14 +186,11 @@ class ResqueWorker
             $this->_trigger->onJobDone($job);
 	}
 
-	/**
-	 * @return ResqueJob|boolean               Instance of Resque_Job if a job is found, false if not.
-	 */
 	public function reserve()
 	{
 		$queues = $this->queues();
 		if(!is_array($queues)) {
-			return false;
+			return NULL;
 		}
 
         $job = ResqueJob::reserveBlocking($queues);
@@ -213,7 +201,7 @@ class ResqueWorker
             return $job;
         }
 
-        return false;
+        return NULL;
 	}
 
 	private function queues()
@@ -349,8 +337,9 @@ class ResqueWorker
 		{
 			if ($worker instanceof self)
 			{
+                list($hostname) = explode(':', $this->_id, 1);
 				list($host, $pid, $queues) = explode(':', $worker->getId(), 3);
-				if($host != $this->hostname || in_array($pid, $workerPids) || $pid == getmypid()) {
+				if($host !== $hostname || in_array($pid, $workerPids) || $pid == getmypid()) {
 					continue;
 				}
                 if($this->_trigger)

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 use FC\Resque\Resque;
+use FC\Resque\ResqueTrigger;
 use FC\Resque\ResqueWorker;
 
 $content = file_get_contents(__DIR__ . '/config.local/config.json');
@@ -32,8 +33,7 @@ foreach ($includes as $file)
     require_once $file;
 }
 
-$worker = new ResqueWorker($queues);
-fwrite(STDOUT, '*** Starting worker ' . $worker->getId() . "\n");
+$worker = new ResqueWorker($queues, new ResqueTrigger());
 $worker->work();
 
 

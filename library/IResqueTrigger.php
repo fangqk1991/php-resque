@@ -6,7 +6,7 @@ use Exception;
 
 interface IResqueTrigger
 {
-    public function onMasterStart();
+    public function onMasterStart(ResqueWorker $worker);
     public function onJobFound(ResqueJob $job);
     public function onJobPerform(ResqueJob $job);
     public function onJobDone(ResqueJob $job);
