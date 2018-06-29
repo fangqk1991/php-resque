@@ -9,6 +9,7 @@ class ResqueConfig
     public $includes;
     public $logFile;
     public $pidFile;
+    public $launcher;
 
     public function __construct()
     {
@@ -17,6 +18,7 @@ class ResqueConfig
         $this->includes = array();
         $this->logFile = NULL;
         $this->pidFile = NULL;
+        $this->launcher = NULL;
     }
 
     public function fc_generate($data)
@@ -39,6 +41,7 @@ class ResqueConfig
             'includes' => 'includes',
             'logFile' => 'logFile',
             'pidFile' => 'pidFile',
+            'launcher' => 'launcher',
         );
     }
 }

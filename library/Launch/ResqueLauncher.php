@@ -5,6 +5,7 @@ namespace FC\Resque\Launch;
 class ResqueLauncher
 {
     private $_configFile;
+
     private $_config;
 
     public function __construct($configFile)
@@ -12,12 +13,16 @@ class ResqueLauncher
         $this->_configFile = $configFile;
 
         $content = file_get_contents($configFile);
-        $this->_config = json_decode($content, TRUE);
+        $data = json_decode($content, TRUE);
+
+        $config = new ResqueConfig();
+        $config->fc_generate($data);
+        $this->_config = $config;
     }
 
     public function pidFile()
     {
-        return $this->_config['pidFile'];
+        return $this->_config->pidFile;
     }
 
     public function getPID()
@@ -44,8 +49,8 @@ class ResqueLauncher
         }
 
         $this->println('Starting php-resque...');
-        passthru(sprintf('nohup php "%s/php-resque.php" "%s" >> "%s" 2>&1 & %s echo $! > "%s"',
-            __DIR__, $this->_configFile, $this->_config['logFile'], "\n", $this->pidFile()));
+        passthru(sprintf('nohup php "%s" "%s" >> "%s" 2>&1 & %s echo $! > "%s"',
+            $this->_config->launcher, $this->_configFile, $this->_config->logFile, "\n", $this->pidFile()));
     }
 
     public function stop()
