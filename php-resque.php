@@ -23,7 +23,6 @@ if(!is_array($queues) || count($queues) === 0) {
 
 Resque::setBackend($redisBackend);
 
-$logLevel = false;
 foreach ($includes as $file)
 {
     if(!file_exists($file)) {
