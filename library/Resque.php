@@ -12,12 +12,10 @@ class Resque
 
 	public static $redis = null;
 	protected static $redisServer = null;
-	protected static $redisDatabase = 0;
 
-	public static function setBackend($server, $database = 0)
+	public static function setBackend($server)
 	{
 		self::$redisServer   = $server;
-		self::$redisDatabase = $database;
 		self::$redis         = null;
 	}
 
