@@ -4,7 +4,7 @@ namespace FC\Example;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use FC\Resque\IResqueTask;
+use FC\Resque\Job\IResqueTask;
 
 class SomeTask implements IResqueTask
 {
