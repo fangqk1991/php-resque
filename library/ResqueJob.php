@@ -135,7 +135,16 @@ class ResqueJob
 	public function getInstance()
 	{
 		if (is_null($this->instance)) {
-            $this->instance = TaskBase::create($this->payload['class']);
+
+		    $className = $this->payload['class'];
+
+            if (!class_exists($className) || !(new $className instanceof IResqueTask)) {
+                throw new ResqueException(
+                    'Could not find job class ' . $className . '.'
+                );
+            }
+
+            $this->instance = new $className();
 		}
 
         return $this->instance;

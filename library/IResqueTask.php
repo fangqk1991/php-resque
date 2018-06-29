@@ -4,5 +4,5 @@ namespace FC\Resque;
 
 interface IResqueTask
 {
-	public function perform($args);
+	public function perform($params);
 }
