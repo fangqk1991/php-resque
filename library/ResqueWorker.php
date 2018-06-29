@@ -5,6 +5,7 @@ namespace FC\Resque;
 use Exception;
 use FC\Resque\Job\DirtyExitException;
 use FC\Resque\Job\JobStatus;
+use FC\Resque\Stat\Stat;
 
 class ResqueWorker
 {

@@ -1,6 +1,8 @@
 <?php
 
-namespace FC\Resque;
+namespace FC\Resque\Stat;
+
+use FC\Resque\Resque;
 
 class Stat
 {

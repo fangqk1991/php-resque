@@ -5,6 +5,7 @@ namespace FC\Resque;
 use FC\Resque\Job\FailureJob;
 use FC\Resque\Job\IResqueTask;
 use FC\Resque\Job\JobStatus;
+use FC\Resque\Stat\Stat;
 
 class ResqueJob
 {
