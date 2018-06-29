@@ -6,7 +6,12 @@ use FC\Resque\Resque;
 use FC\Resque\ResqueTrigger;
 use FC\Resque\ResqueWorker;
 
-$content = file_get_contents(__DIR__ . '/config.local/config.json');
+if(count($argv) <= 1)
+{
+    die("missing config file\n");
+}
+
+$content = file_get_contents($argv[1]);
 $data = json_decode($content, TRUE);
 
 $redisBackend = $data['redis'];

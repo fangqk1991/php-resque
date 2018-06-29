@@ -13,6 +13,7 @@
   "autoload": {
     "psr-4": {
       "FC\\Resque\\": "library/",
+      "FC\\Resque\\Launch\\": "library/Launch/",
       "FC\\Resque\\Stat\\": "library/Stat/",
       "FC\\Resque\\Job\\": "library/Job/"
     }

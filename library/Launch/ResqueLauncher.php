@@ -1,26 +1,16 @@
-#!/usr/bin/env php
 <?php
 
-if(count($argv) <= 1)
+namespace FC\Resque\Launch;
+
+class ResqueLauncher
 {
-    die("Usage: $argv[0] {start|stop|restart|status}\n");
-}
-
-$cmd = $argv[1];
-
-$configFile = __DIR__ . '/config.local/config.json';
-
-if(count($argv) > 2)
-{
-    $configFile = $argv[2];
-}
-
-class Starter
-{
+    private $_configFile;
     private $_config;
 
     public function __construct($configFile)
     {
+        $this->_configFile = $configFile;
+
         $content = file_get_contents($configFile);
         $this->_config = json_decode($content, TRUE);
     }
@@ -54,8 +44,8 @@ class Starter
         }
 
         $this->println('Starting php-resque...');
-        passthru(sprintf('nohup php "%s/php-resque.php" >> "%s" 2>&1 & %s echo $! > "%s"',
-            __DIR__, $this->_config['logFile'], "\n", $this->pidFile()));
+        passthru(sprintf('nohup php "%s/php-resque.php" "%s" >> "%s" 2>&1 & %s echo $! > "%s"',
+            __DIR__, $this->_configFile, $this->_config['logFile'], "\n", $this->pidFile()));
     }
 
     public function stop()
@@ -90,22 +80,4 @@ class Starter
     {
         fwrite(STDOUT, sprintf('%s%s', $msg, PHP_EOL));
     }
-}
-
-$starter = new Starter($configFile);
-switch ($cmd)
-{
-    case 'start':
-        $starter->start();
-        break;
-    case 'stop':
-        $starter->stop();
-        break;
-    case 'restart':
-        $starter->stop();
-        $starter->start();
-        break;
-    case 'status':
-        $starter->checkStatus();
-        break;
 }
