@@ -8,7 +8,7 @@ use RuntimeException;
 class Resque
 {
 	const kVersion = '1.3';
-    const kTimeout = 50;
+    const kTimeout = 5;
 
 	public static $redis = null;
 	protected static $redisServer = null;

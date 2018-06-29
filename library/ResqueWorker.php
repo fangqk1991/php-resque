@@ -1,7 +1,5 @@
 <?php
 
-declare(ticks = 1);
-
 namespace FC\Resque;
 
 use Exception;
@@ -56,15 +54,9 @@ class ResqueWorker
 		return $instances;
 	}
 
-	/**
-	 * Given a worker ID, check if it is registered/valid.
-	 *
-	 * @param string $workerId ID of the worker.
-	 * @return boolean True if the worker exists, false if not.
-	 */
 	public static function exists($workerId)
 	{
-		return (bool)Resque::redis()->sismember('resque:workers', $workerId);
+		return Resque::redis()->sismember('resque:workers', $workerId);
 	}
 
 	/**
@@ -108,11 +100,15 @@ class ResqueWorker
 				break;
 			}
 
-            $job = $this->reserve();
+//            pcntl_signal_dispatch();
+            $job = ResqueJob::reserveBlocking($this->queues());
 
-			if(!$job) {
+			if(!($job instanceof ResqueJob)) {
 				continue;
 			}
+
+            if($this->_trigger)
+                $this->_trigger->onJobFound($job);
 
 			$this->workingOn($job);
 
@@ -173,19 +169,6 @@ class ResqueWorker
 
         if($this->_trigger)
             $this->_trigger->onJobDone($job);
-	}
-
-	public function reserve()
-	{
-        $job = ResqueJob::reserveBlocking($this->queues());
-        if($job instanceof ResqueJob) {
-            if($this->_trigger)
-                $this->_trigger->onJobFound($job);
-
-            return $job;
-        }
-
-        return NULL;
 	}
 
 	private function queues()
@@ -352,8 +335,6 @@ class ResqueWorker
 
 	/**
 	 * Tell Redis which job we're currently working on.
-	 *
-	 * @param object $job Resque_Job instance containing the job we're working on.
 	 */
 	public function workingOn(ResqueJob $job)
 	{

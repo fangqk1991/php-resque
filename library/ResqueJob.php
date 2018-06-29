@@ -76,19 +76,12 @@ class ResqueJob
 		return $id;
 	}
 
-	/**
-	 * Find the next available job from the specified queues using blocking list pop
-	 * and return an instance of Resque_Job for it.
-	 *
-	 * @param array             $queues
-	 * @return false|ResqueJob Null when there aren't any waiting jobs, instance of Resque_Job when a job was found.
-	 */
-	public static function reserveBlocking(array $queues)
+    public static function reserveBlocking(array $queues)
 	{
 		$item = Resque::blpop($queues, Resque::kTimeout);
 
 		if(!is_array($item)) {
-			return false;
+			return NULL;
 		}
 
 		return new ResqueJob($item['queue'], $item['payload']);
@@ -141,36 +134,16 @@ class ResqueJob
 	 */
 	public function getInstance()
 	{
-		if (!is_null($this->instance)) {
-			return $this->instance;
+		if (is_null($this->instance)) {
+            $this->instance = TaskBase::create($this->payload['class']);
 		}
 
-        $this->instance = TaskBase::create($this->payload['class'], $this->getArguments(), $this->queue);
-        $this->instance->job = $this;
         return $this->instance;
 	}
 
-	/**
-	 * Actually execute a job by calling the perform method on the class
-	 * associated with the job with the supplied arguments.
-	 *
-	 * @return bool
-	 * @throws ResqueException When the job's class could not be found or it does not contain a perform method.
-	 */
 	public function perform()
 	{
-        $instance = $this->getInstance();
-        if(method_exists($instance, 'setUp')) {
-            $instance->setUp();
-        }
-
-        $instance->perform();
-
-        if(method_exists($instance, 'tearDown')) {
-            $instance->tearDown();
-        }
-
-		return true;
+        $this->getInstance()->perform($this->getArguments());
 	}
 
 	/**
