@@ -1,10 +1,8 @@
 <?php
 
-namespace FC\Resque\Stat;
+namespace FC\Resque\Core;
 
-use FC\Resque\Core\Resque;
-
-class Stat
+class ResqueStat
 {
 	public static function get($stat)
 	{

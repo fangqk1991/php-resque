@@ -3,11 +3,10 @@
 namespace FC\Resque;
 
 use FC\Resque\Core\Resque;
-use FC\Resque\Core\ResqueException;
+use FC\Resque\Core\ResqueStat;
 use FC\Resque\Job\FailureJob;
 use FC\Resque\Job\IResqueTask;
 use FC\Resque\Job\JobStatus;
-use FC\Resque\Stat\Stat;
 
 class ResqueJob
 {
@@ -173,8 +172,8 @@ class ResqueJob
 			$this->queue,
             $this->payload
 		);
-		Stat::incr('failed');
-        Stat::incr('failed:' . $this->worker->getId());
+		ResqueStat::incr('failed');
+        ResqueStat::incr('failed:' . $this->worker->getId());
 	}
 
 	/**

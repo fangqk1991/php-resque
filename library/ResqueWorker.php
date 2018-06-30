@@ -4,9 +4,9 @@ namespace FC\Resque;
 
 use Exception;
 use FC\Resque\Core\Resque;
+use FC\Resque\Core\ResqueStat;
 use FC\Resque\Job\DirtyExitException;
 use FC\Resque\Job\JobStatus;
-use FC\Resque\Stat\Stat;
 
 class ResqueWorker
 {
@@ -217,8 +217,8 @@ class ResqueWorker
 		Resque::redis()->srem('resque:workers', $id);
 		Resque::redis()->del('resque:worker:' . $id);
 		Resque::redis()->del('resque:worker:' . $id . ':started');
-		Stat::clear('processed:' . $id);
-        Stat::clear('failed:' . $id);
+		ResqueStat::clear('processed:' . $id);
+        ResqueStat::clear('failed:' . $id);
 	}
 
 	/**
@@ -240,8 +240,8 @@ class ResqueWorker
 	public function doneWorking()
 	{
 		$this->_currentJob = null;
-        Stat::incr('processed');
-		Stat::incr('processed:' . $this->getId());
+        ResqueStat::incr('processed');
+		ResqueStat::incr('processed:' . $this->getId());
 		Resque::redis()->del('resque:worker:' . $this->getId());
 	}
 
