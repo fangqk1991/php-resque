@@ -3,7 +3,7 @@
 namespace FC\Resque\Job;
 
 use Exception;
-use FC\Resque\Resque;
+use FC\Resque\Core\Resque;
 use FC\Resque\ResqueWorker;
 use stdClass;
 

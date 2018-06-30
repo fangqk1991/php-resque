@@ -1,6 +1,6 @@
 <?php
 
-namespace FC\Resque;
+namespace FC\Resque\Core;
 
 use Redis;
 use RuntimeException;

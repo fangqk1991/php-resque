@@ -2,7 +2,7 @@
 
 namespace FC\Resque\Stat;
 
-use FC\Resque\Resque;
+use FC\Resque\Core\Resque;
 
 class Stat
 {

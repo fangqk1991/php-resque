@@ -3,9 +3,9 @@
 
 include_once __DIR__ . '/vendor/autoload.php';
 
+use FC\Resque\Core\Resque;
 use FC\Resque\Launch\Launcher;
 use FC\Resque\Launch\FCWorker;
-use FC\Resque\Resque;
 use FC\Resque\ResqueMaster;
 use FC\Resque\ResqueTrigger;
 use FC\Resque\ResqueWorker;

@@ -2,7 +2,7 @@
 
 namespace FC\Resque\Job;
 
-use FC\Resque\Resque;
+use FC\Resque\Core\Resque;
 
 class JobStatus
 {

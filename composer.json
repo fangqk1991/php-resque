@@ -14,6 +14,7 @@
     "psr-4": {
       "FC\\Utils\\Model\\": "library/Model/",
       "FC\\Resque\\": "library/",
+      "FC\\Resque\\Core\\": "library/Core/",
       "FC\\Resque\\Launch\\": "library/Launch/",
       "FC\\Resque\\Stat\\": "library/Stat/",
       "FC\\Resque\\Job\\": "library/Job/"
