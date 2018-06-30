@@ -5,22 +5,24 @@ include_once __DIR__ . '/vendor/autoload.php';
 
 use FC\Resque\Launch\ProgressWorker;
 use FC\Resque\Launch\ProgressMaster;
-use FC\Resque\Launch\ResqueLauncher;
+use FC\Resque\Launch\Launcher;
 use FC\Resque\Resque;
 use FC\Resque\ResqueTrigger;
 use FC\Resque\ResqueWorker;
 
 $cmd = isset($argv[1]) ? $argv[1] : '';
 
-$master = ProgressMaster::configFromFile(__DIR__ . '/config.local/config.json');
+$master = ProgressMaster::masterFromFile(__DIR__ . '/config.local/config.json');
 
 if($cmd === '--launch')
 {
+    $master->checkLaunchAble();
+
     foreach ($master->progresses as $progress)
     {
         if($progress instanceof ProgressWorker)
         {
-            $pid = Resque::fork();
+            $pid = $master->fork();
 
             if ($pid === 0) {
 
@@ -35,13 +37,15 @@ if($cmd === '--launch')
         }
     }
 
+    $master->savePIDInfos();
+
     Resque::setBackend($master->redisBackend);
     $worker = new ResqueWorker(['resque-signal'], new ResqueTrigger());
     $worker->work();
 }
 else
 {
-    $starter = new ResqueLauncher($argv[0], $master);
+    $starter = new Launcher($argv[0], $master);
     $starter->handle($cmd);
 }
 

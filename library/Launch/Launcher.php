@@ -2,7 +2,7 @@
 
 namespace FC\Resque\Launch;
 
-class ResqueLauncher
+class Launcher
 {
     private $_master;
     private $_launchFile;
@@ -15,26 +15,12 @@ class ResqueLauncher
 
     public function pidFile()
     {
-        return $this->_master->masterPIDFile;
-    }
-
-    public function getPID()
-    {
-        $pid = 0;
-
-        $pidFile = $this->pidFile();
-        if(file_exists($pidFile))
-        {
-            $pid = intval(file_get_contents($pidFile));
-        }
-
-        return $pid;
+        return $this->_master->pidFile;
     }
 
     public function start()
     {
-        $pid = $this->getPID();
-        if($pid > 0)
+        if(($pid = $this->_master->curPID()) > 0)
         {
             $this->println("php-resque(${pid}) is running.");
             $this->println('You should stop it before you start.');
@@ -42,29 +28,25 @@ class ResqueLauncher
         }
 
         $this->println('Starting php-resque...');
-        passthru(sprintf('nohup php "%s" --launch >> "%s" 2>&1 & %s echo $! > "%s"',
-            $this->_launchFile, $this->_master->masterLogFile, "\n", $this->pidFile()));
+        passthru(sprintf('nohup php "%s" --launch >> "%s" 2>&1 &',
+            $this->_launchFile, $this->_master->logFile));
     }
 
     public function stop()
     {
-        $pid = $this->getPID();
-        if($pid === 0)
+        if($this->_master->curPID() === 0)
         {
             $this->println('php-resque is not running.');
             return ;
         }
 
         $this->println('Stopping php-resque...');
-
-        posix_kill($pid, SIGKILL);
-        unlink($this->pidFile());
+        $this->_master->stop();
     }
 
     public function checkStatus()
     {
-        $pid = $this->getPID();
-        if($pid > 0)
+        if(($pid = $this->_master->curPID()) > 0)
         {
             $this->println("php-resque(${pid}) is running.");
         }
