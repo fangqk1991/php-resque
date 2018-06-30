@@ -4,19 +4,12 @@ namespace FC\Resque\Launch;
 
 class ResqueLauncher
 {
-    private $_configFile;
-
     private $_config;
+    private $_launchFile;
 
-    public function __construct($configFile)
+    public function __construct($launchFile, ResqueConfig $config)
     {
-        $this->_configFile = $configFile;
-
-        $content = file_get_contents($configFile);
-        $data = json_decode($content, TRUE);
-
-        $config = new ResqueConfig();
-        $config->fc_generate($data);
+        $this->_launchFile = $launchFile;
         $this->_config = $config;
     }
 
@@ -49,8 +42,8 @@ class ResqueLauncher
         }
 
         $this->println('Starting php-resque...');
-        passthru(sprintf('nohup php "%s" "%s" >> "%s" 2>&1 & %s echo $! > "%s"',
-            $this->_config->launcher, $this->_configFile, $this->_config->logFile, "\n", $this->pidFile()));
+        passthru(sprintf('nohup php "%s" --launch >> "%s" 2>&1 & %s echo $! > "%s"',
+            $this->_launchFile, $this->_config->logFile, "\n", $this->pidFile()));
     }
 
     public function stop()
@@ -78,6 +71,29 @@ class ResqueLauncher
         else
         {
             $this->println('php-resque is not running.');
+        }
+    }
+
+    public function handle($cmd)
+    {
+        switch ($cmd)
+        {
+            case 'start':
+                $this->start();
+                break;
+            case 'stop':
+                $this->stop();
+                break;
+            case 'restart':
+                $this->stop();
+                $this->start();
+                break;
+            case 'status':
+                $this->checkStatus();
+                break;
+            default:
+                $this->println('Usage: {start|stop|restart|status}');
+                break;
         }
     }
 
