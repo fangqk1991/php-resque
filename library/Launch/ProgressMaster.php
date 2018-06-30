@@ -23,9 +23,6 @@ class ProgressMaster extends Model
         $this->pidFile = NULL;
 
         $this->progresses = array();
-
-        $this->_curPID = 0;
-        $this->_subPIDs = array();
     }
 
     protected function fc_afterGenerate($data = array())
@@ -35,11 +32,11 @@ class ProgressMaster extends Model
         }
 
         if(empty($this->logFile)) {
-            die(__CLASS__ . " masterLogFile error.\n");
+            die(__CLASS__ . " logFile error.\n");
         }
 
         if(empty($this->pidFile)) {
-            die(__CLASS__ . " masterPIDFile error.\n");
+            die(__CLASS__ . " pidFile error.\n");
         }
 
         $this->loadPIDInfos();
@@ -47,6 +44,9 @@ class ProgressMaster extends Model
 
     private function loadPIDInfos()
     {
+        $this->_curPID = 0;
+        $this->_subPIDs = array();
+
         $pids = array();
 
         if(file_exists($this->pidFile))
@@ -120,7 +120,7 @@ class ProgressMaster extends Model
     {
         if($this->_curPID > 0)
         {
-            die("php-resque is running. Master PID: $this->_curPID.\n");
+            die("The application is running. Master PID: $this->_curPID.\n");
         }
     }
 
@@ -145,5 +145,7 @@ class ProgressMaster extends Model
         {
             unlink($this->pidFile);
         }
+
+        $this->loadPIDInfos();
     }
 }

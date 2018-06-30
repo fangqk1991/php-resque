@@ -98,8 +98,6 @@ class ResqueWorker
 
 		while(true) {
 
-            pcntl_signal_dispatch();
-
 			if($this->_shutdown) {
 				break;
 			}
@@ -188,32 +186,8 @@ class ResqueWorker
 	 */
 	private function startup()
 	{
-		$this->registerSigHandlers();
 		$this->pruneDeadWorkers();
 		$this->registerWorker();
-	}
-
-	/**
-	 * Register signal handlers that a worker should respond to.
-	 *
-	 * TERM: Shutdown immediately and stop processing jobs.
-	 * INT: Shutdown immediately and stop processing jobs.
-	 * QUIT: Shutdown after the current job finishes processing.
-	 * USR1: Kill the forked child immediately and continue processing jobs.
-	 */
-	private function registerSigHandlers()
-	{
-		if(!function_exists('pcntl_signal')) {
-			return;
-		}
-
-		pcntl_signal(SIGTERM, array($this, 'shutDownNow'));
-		pcntl_signal(SIGINT, array($this, 'shutDownNow'));
-		pcntl_signal(SIGQUIT, array($this, 'shutdown'));
-		pcntl_signal(SIGUSR1, array($this, 'killChild'));
-
-		if($this->_trigger)
-		    $this->_trigger->onSignalReceived(__FUNCTION__);
 	}
 
 	/**
@@ -240,7 +214,7 @@ class ResqueWorker
 
 	/**
 	 * Kill a forked child job immediately. The job it is processing will not
-	 * be completed.
+	 * be completed.s
 	 */
 	public function killChild()
 	{
@@ -266,48 +240,14 @@ class ResqueWorker
 		}
 	}
 
-	/**
-	 * Look for any workers which should be running on this server and if
-	 * they're not, remove them from Redis.
-	 *
-	 * This is a form of garbage collection to handle cases where the
-	 * server may have been killed and the Resque workers did not die gracefully
-	 * and therefore leave state information in Redis.
-	 */
 	public function pruneDeadWorkers()
 	{
-		$workerPids = $this->workerPids();
 		$workers = self::all();
 		foreach($workers as $worker)
 		{
-			if ($worker instanceof self)
-			{
-                list($hostname) = explode(':', $this->_id, 1);
-				list($host, $pid, $queues) = explode(':', $worker->getId(), 3);
-				if($host !== $hostname || in_array($pid, $workerPids) || $pid == getmypid()) {
-					continue;
-				}
-                if($this->_trigger)
-                    $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Pruning dead worker: %s', $worker->getId()));
-				$worker->unregisterWorker();
-			}
+//		    var_dump($worker);
+//            $worker->unregisterWorker();
 		}
-	}
-
-	/**
-	 * Return an array of process IDs for all of the Resque workers currently
-	 * running on this machine.
-	 *
-	 * @return array Array of Resque worker process IDs.
-	 */
-	public function workerPids()
-	{
-		$pids = array();
-		exec('ps -A -o pid,command | grep [r]esque', $cmdOutput);
-		foreach($cmdOutput as $line) {
-			list($pids[],) = explode(' ', trim($line), 2);
-		}
-		return $pids;
 	}
 
 	/**
