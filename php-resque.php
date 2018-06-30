@@ -4,7 +4,7 @@
 include_once __DIR__ . '/vendor/autoload.php';
 
 use FC\Resque\Launch\Launcher;
-use FC\Resque\Launch\ProgressWorker;
+use FC\Resque\Launch\FCWorker;
 use FC\Resque\Resque;
 use FC\Resque\ResqueMaster;
 use FC\Resque\ResqueTrigger;
@@ -25,9 +25,9 @@ if($cmd === '--launch')
 
     $master->clearDeadWorkers();
 
-    foreach ($masterProgress->progresses as $progress)
+    foreach ($masterProgress->workers as $progress)
     {
-        if($progress instanceof ProgressWorker)
+        if($progress instanceof FCWorker)
         {
             $pid = $masterProgress->fork();
 

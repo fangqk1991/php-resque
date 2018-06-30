@@ -4,7 +4,7 @@ namespace FC\Resque\Launch;
 
 use FC\Utils\Model\Model;
 
-class ProgressWorker extends Model
+class FCWorker extends Model
 {
     public $name;
     public $queues;

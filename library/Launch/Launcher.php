@@ -7,7 +7,7 @@ class Launcher
     private $_master;
     private $_launchFile;
 
-    public function __construct($launchFile, ProgressMaster $master)
+    public function __construct($launchFile, FCMaster $master)
     {
         $this->_launchFile = $launchFile;
         $this->_master = $master;

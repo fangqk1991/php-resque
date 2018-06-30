@@ -3,15 +3,14 @@
 namespace FC\Resque\Launch;
 
 use FC\Utils\Model\Model;
-use RuntimeException;
 
-class ProgressMaster extends Model
+class FCMaster extends Model
 {
     public $redisBackend;
     public $logFile;
     public $pidFile;
 
-    public $progresses;
+    public $workers;
 
     private $_curPID;
     private $_subPIDs;
@@ -22,7 +21,7 @@ class ProgressMaster extends Model
         $this->logFile = NULL;
         $this->pidFile = NULL;
 
-        $this->progresses = array();
+        $this->workers = array();
     }
 
     protected function fc_afterGenerate($data = array())
@@ -80,14 +79,14 @@ class ProgressMaster extends Model
             'redisBackend' => 'redis',
             'logFile' => 'logFile',
             'pidFile' => 'pidFile',
-            'progresses' => 'progresses',
+            'workers' => 'workers',
         );
     }
 
     protected function fc_arrayItemClassMapper()
     {
         return array(
-            'progresses' => '\FC\Resque\Launch\ProgressWorker'
+            'workers' => '\FC\Resque\Launch\FCWorker'
         );
     }
 

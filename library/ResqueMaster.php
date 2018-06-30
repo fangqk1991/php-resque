@@ -5,7 +5,7 @@ namespace FC\Resque;
 use Exception;
 use FC\Resque\Job\DirtyExitException;
 use FC\Resque\Job\JobStatus;
-use FC\Resque\Launch\ProgressMaster;
+use FC\Resque\Launch\FCMaster;
 use FC\Resque\Stat\Stat;
 
 class ResqueMaster extends ResqueWorker
@@ -14,17 +14,6 @@ class ResqueMaster extends ResqueWorker
     {
         parent::__construct(array('RESQUE-SIGNAL'), $trigger);
     }
-
-//    public function __construct2(array $queues)
-//    {
-//        parent::__construct($queues, $trigger);
-//    }
-//
-//
-//    public function ResqueMaster(IResqueTrigger $trigger = NULL)
-//    {
-//        return new ResqueMaster(array('resque-signal'), $trigger);
-//    }
 
 	public function clearDeadWorkers()
 	{
@@ -76,13 +65,13 @@ class ResqueMaster extends ResqueWorker
     }
 
     /**
-     * @var ProgressMaster
+     * @var FCMaster
      */
     private $_progress;
 
     public function initWithConfig($configFile)
     {
-        $this->_progress = ProgressMaster::masterFromFile($configFile);
+        $this->_progress = FCMaster::masterFromFile($configFile);
     }
 
     public function progress()
