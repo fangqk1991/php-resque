@@ -15,7 +15,7 @@ class ResqueLauncher
 
     public function pidFile()
     {
-        return $this->_config->pidFile;
+        return $this->_config->masterPIDFile;
     }
 
     public function getPID()
@@ -43,7 +43,7 @@ class ResqueLauncher
 
         $this->println('Starting php-resque...');
         passthru(sprintf('nohup php "%s" --launch >> "%s" 2>&1 & %s echo $! > "%s"',
-            $this->_launchFile, $this->_config->logFile, "\n", $this->pidFile()));
+            $this->_launchFile, $this->_config->masterLogFile, "\n", $this->pidFile()));
     }
 
     public function stop()

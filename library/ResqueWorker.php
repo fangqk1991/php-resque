@@ -97,11 +97,13 @@ class ResqueWorker
 		$this->startup();
 
 		while(true) {
+
+            pcntl_signal_dispatch();
+
 			if($this->_shutdown) {
 				break;
 			}
 
-//            pcntl_signal_dispatch();
             $job = ResqueJob::reserveBlocking($this->queues());
 
 			if(!($job instanceof ResqueJob)) {
