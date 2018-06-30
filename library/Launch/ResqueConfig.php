@@ -2,63 +2,52 @@
 
 namespace FC\Resque\Launch;
 
-class ResqueConfig
+class ResqueConfig extends Model
 {
     public $redisBackend;
-    public $queues;
-    public $includes;
-    public $logFile;
-    public $pidFile;
+    public $masterLogFile;
+    public $masterPIDFile;
 
-    public function __construct()
+    public $progresses;
+
+    protected function fc_defaultInit()
     {
         $this->redisBackend = NULL;
-        $this->queues = array();
-        $this->includes = array();
-        $this->logFile = NULL;
-        $this->pidFile = NULL;
+        $this->masterLogFile = NULL;
+        $this->masterPIDFile = NULL;
+
+        $this->progresses = array();
     }
 
-    public function fc_generate($data)
-    {
-        $propertyMap = $this->fc_propertyMapper();
-        foreach($propertyMap as $property => $jsonKey)
-        {
-            if(isset($data[$jsonKey]) && property_exists($this, $property))
-            {
-                $this->$property = $data[$jsonKey];
-            }
-        }
-
-        $this->checkValid();
-    }
-
-    public function checkValid()
+    protected function fc_afterGenerate($data = array())
     {
         if(empty($this->redisBackend)) {
-            die("redisBackend error.\n");
+            die(__CLASS__ . " redisBackend error.\n");
         }
 
-        if(!is_array($this->queues) || count($this->queues) === 0) {
-            die("queues error.\n");
+        if(empty($this->masterLogFile)) {
+            die(__CLASS__ . " masterLogFile error.\n");
         }
 
-        foreach ($this->includes as $file)
-        {
-            if(!file_exists($file)) {
-                die("$file not exists.\n");
-            }
+        if(empty($this->masterPIDFile)) {
+            die(__CLASS__ . " masterPIDFile error.\n");
         }
     }
 
-    private function fc_propertyMapper()
+    protected function fc_propertyMapper()
     {
         return array(
             'redisBackend' => 'redis',
-            'queues' => 'queues',
-            'includes' => 'includes',
-            'logFile' => 'logFile',
-            'pidFile' => 'pidFile',
+            'masterLogFile' => 'masterLogFile',
+            'masterPIDFile' => 'masterPIDFile',
+            'progresses' => 'progresses',
+        );
+    }
+
+    protected function fc_arrayItemClassMapper()
+    {
+        return array(
+            'progresses' => '\FC\Resque\Launch\Progress'
         );
     }
 
