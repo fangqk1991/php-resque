@@ -116,14 +116,6 @@ class ProgressMaster extends Model
         return $pid;
     }
 
-    public function checkLaunchAble()
-    {
-        if($this->_curPID > 0)
-        {
-            die("The application is running. Master PID: $this->_curPID.\n");
-        }
-    }
-
     public function savePIDInfos()
     {
         $pidList = $this->_subPIDs;

@@ -37,46 +37,9 @@ class ResqueWorker
         $this->_trigger = $trigger;
     }
 
-	/**
-	 * Return all workers known to Resque as instantiated instances.
-	 * @return array
-	 */
-	public static function all()
-	{
-		$workers = Resque::redis()->smembers('resque:workers');
-		if(!is_array($workers)) {
-			$workers = array();
-		}
-
-		$instances = array();
-		foreach($workers as $workerId) {
-			$instances[] = self::find($workerId);
-		}
-		return $instances;
-	}
-
 	public static function exists($workerId)
 	{
 		return Resque::redis()->sismember('resque:workers', $workerId);
-	}
-
-	/**
-	 * Given a worker ID, find it and return an instantiated worker class for it.
-	 *
-	 * @param string $workerId The ID of the worker.
-	 * @return bool|ResqueWorker
-	 */
-	public static function find($workerId)
-	{
-		if(!self::exists($workerId) || false === strpos($workerId, ":")) {
-			return false;
-		}
-
-		list($hostname, $pid, $queues) = explode(':', $workerId, 3);
-		$queues = explode(',', $queues);
-		$worker = new self($queues);
-		$worker->setId($workerId);
-		return $worker;
 	}
 
     public function setId($workerId)
@@ -92,9 +55,9 @@ class ResqueWorker
 	public function work()
 	{
         if($this->_trigger)
-            $this->_trigger->onMasterStart($this);
+            $this->_trigger->onWorkerStart($this);
 
-		$this->startup();
+        $this->registerWorker();
 
 		while(true) {
 
@@ -182,15 +145,6 @@ class ResqueWorker
 	}
 
 	/**
-	 * Perform necessary actions to start a worker.
-	 */
-	private function startup()
-	{
-		$this->pruneDeadWorkers();
-		$this->registerWorker();
-	}
-
-	/**
 	 * Schedule a worker for shutdown. Will finish processing the current job
 	 * and when the timeout interval is reached, the worker will shut down.
 	 */
@@ -237,16 +191,6 @@ class ResqueWorker
             if($this->_trigger)
                 $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] not found, restarting.', $this->_childPID));
 			$this->shutdown();
-		}
-	}
-
-	public function pruneDeadWorkers()
-	{
-		$workers = self::all();
-		foreach($workers as $worker)
-		{
-//		    var_dump($worker);
-//            $worker->unregisterWorker();
 		}
 	}
 

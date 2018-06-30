@@ -6,7 +6,7 @@ use Exception;
 
 class ResqueTrigger implements IResqueTrigger
 {
-    public function onMasterStart(ResqueWorker $worker)
+    public function onWorkerStart(ResqueWorker $worker)
     {
         $this->log('*** Starting worker: ' . $worker->getId());
     }

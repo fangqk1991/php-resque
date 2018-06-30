@@ -3,30 +3,37 @@
 
 include_once __DIR__ . '/vendor/autoload.php';
 
-use FC\Resque\Launch\ProgressWorker;
-use FC\Resque\Launch\ProgressMaster;
 use FC\Resque\Launch\Launcher;
+use FC\Resque\Launch\ProgressWorker;
 use FC\Resque\Resque;
+use FC\Resque\ResqueMaster;
 use FC\Resque\ResqueTrigger;
 use FC\Resque\ResqueWorker;
 
 $cmd = isset($argv[1]) ? $argv[1] : '';
 
-$master = ProgressMaster::masterFromFile(__DIR__ . '/config.local/config.json');
+
+$master = new ResqueMaster(new ResqueTrigger());
+$master->initWithConfig(__DIR__ . '/config.local/config.json');
+$masterProgress = $master->progress();
+
+Resque::setBackend($master->redisBackend());
 
 if($cmd === '--launch')
 {
     $master->checkLaunchAble();
 
-    foreach ($master->progresses as $progress)
+    $master->clearDeadWorkers();
+
+    foreach ($masterProgress->progresses as $progress)
     {
         if($progress instanceof ProgressWorker)
         {
-            $pid = $master->fork();
+            $pid = $masterProgress->fork();
 
             if ($pid === 0) {
 
-                Resque::setBackend($master->redisBackend);
+                Resque::setBackend($masterProgress->redisBackend);
                 $progress->loadIncludes();
 
                 $worker = new ResqueWorker($progress->queues, new ResqueTrigger());
@@ -37,15 +44,13 @@ if($cmd === '--launch')
         }
     }
 
-    $master->savePIDInfos();
+    $masterProgress->savePIDInfos();
 
-    Resque::setBackend($master->redisBackend);
-    $worker = new ResqueWorker(['resque-signal'], new ResqueTrigger());
-    $worker->work();
+    $master->work();
 }
 else
 {
-    $starter = new Launcher($argv[0], $master);
+    $starter = new Launcher($argv[0], $masterProgress);
     $starter->handle($cmd);
 }
 
