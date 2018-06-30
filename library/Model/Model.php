@@ -1,6 +1,6 @@
 <?php
 
-namespace FC\Resque\Launch;
+namespace FC\Utils\Model;
 
 abstract class Model
 {

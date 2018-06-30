@@ -2,7 +2,9 @@
 
 namespace FC\Resque\Launch;
 
-class ResqueConfig extends Model
+use FC\Utils\Model\Model;
+
+class ProgressMaster extends Model
 {
     public $redisBackend;
     public $masterLogFile;
@@ -47,7 +49,7 @@ class ResqueConfig extends Model
     protected function fc_arrayItemClassMapper()
     {
         return array(
-            'progresses' => '\FC\Resque\Launch\Progress'
+            'progresses' => '\FC\Resque\Launch\ProgressWorker'
         );
     }
 

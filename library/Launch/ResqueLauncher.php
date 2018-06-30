@@ -4,18 +4,18 @@ namespace FC\Resque\Launch;
 
 class ResqueLauncher
 {
-    private $_config;
+    private $_master;
     private $_launchFile;
 
-    public function __construct($launchFile, ResqueConfig $config)
+    public function __construct($launchFile, ProgressMaster $master)
     {
         $this->_launchFile = $launchFile;
-        $this->_config = $config;
+        $this->_master = $master;
     }
 
     public function pidFile()
     {
-        return $this->_config->masterPIDFile;
+        return $this->_master->masterPIDFile;
     }
 
     public function getPID()
@@ -43,7 +43,7 @@ class ResqueLauncher
 
         $this->println('Starting php-resque...');
         passthru(sprintf('nohup php "%s" --launch >> "%s" 2>&1 & %s echo $! > "%s"',
-            $this->_launchFile, $this->_config->masterLogFile, "\n", $this->pidFile()));
+            $this->_launchFile, $this->_master->masterLogFile, "\n", $this->pidFile()));
     }
 
     public function stop()

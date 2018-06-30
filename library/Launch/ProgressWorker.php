@@ -2,7 +2,9 @@
 
 namespace FC\Resque\Launch;
 
-class Progress extends Model
+use FC\Utils\Model\Model;
+
+class ProgressWorker extends Model
 {
     public $name;
     public $queues;
@@ -25,8 +27,11 @@ class Progress extends Model
             die(__CLASS__ . " queues error.\n");
         }
 
-        if(empty($this->includes)) {
-            die(__CLASS__ . " includes error.\n");
+        foreach ($this->includes as $file)
+        {
+            if(!file_exists($file)) {
+                die(__CLASS__ . "$file not exists.\n");
+            }
         }
     }
 
@@ -37,5 +42,13 @@ class Progress extends Model
             'queues' => 'queues',
             'includes' => 'includes',
         );
+    }
+
+    public function loadIncludes()
+    {
+        foreach ($this->includes as $file)
+        {
+            include_once $file;
+        }
     }
 }

@@ -12,6 +12,7 @@
   "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
+      "FC\\Utils\\Model\\": "library/Model/",
       "FC\\Resque\\": "library/",
       "FC\\Resque\\Launch\\": "library/Launch/",
       "FC\\Resque\\Stat\\": "library/Stat/",
