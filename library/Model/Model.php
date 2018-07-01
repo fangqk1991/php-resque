@@ -66,13 +66,30 @@ abstract class Model
     final protected function fc_encode()
     {
         $propertyMap = $this->fc_propertyMapper();
+        $propertyClassMap = $this->fc_propertyClassMapper();
+        $itemClassMap = $this->fc_arrayItemClassMapper();
 
         $data = array();
         foreach($propertyMap as $property => $jsonKey)
         {
             if(property_exists($this, $property))
             {
-                $data[$jsonKey] = $this->$property;
+                $entity = $this->$property;
+
+                if(isset($propertyClassMap[$property]) && $entity instanceof Model)
+                {
+                    $data[$jsonKey] = $entity->fc_retMap();
+                }
+                else if(isset($itemClassMap[$property]) && is_array($entity))
+                {
+                    $data[$jsonKey] = array_map(function (Model $item) {
+                        return $item->fc_retMap();
+                    }, $entity);
+                }
+                else
+                {
+                    $data[$jsonKey] = $entity;
+                }
             }
         }
 
