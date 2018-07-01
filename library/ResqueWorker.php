@@ -120,8 +120,8 @@ class ResqueWorker
 	 */
 	public function registerWorker()
 	{
-		Resque::redis()->sadd(self::key_workersSet(), $this->_id);
-		Resque::redis()->set('resque:worker:' . $this->_id . ':started', strftime('%a %b %d %H:%M:%S %Z %Y'));
+		Resque::redis()->sadd(self::redisKey_workerSet(), $this->_id);
+		Resque::redis()->set($this->redisKey_workerStarted(), strftime('%a %b %d %H:%M:%S %Z %Y'));
 	}
 
 	/**
@@ -130,16 +130,12 @@ class ResqueWorker
 	public function unregisterWorker()
 	{
 		$id = $this->_id;
-		Resque::redis()->srem(self::key_workersSet(), $id);
-		Resque::redis()->del('resque:worker:' . $id);
-		Resque::redis()->del('resque:worker:' . $id . ':started');
+		Resque::redis()->srem(self::redisKey_workerSet(), $id);
+		Resque::redis()->del($this->redisKey_workerStarted());
 		ResqueStat::clear('processed:' . $id);
         ResqueStat::clear('failed:' . $id);
 	}
 
-	/**
-	 * Tell Redis which job we're currently working on.
-	 */
 	public function workingOn(ResqueJob $job)
 	{
 		$job->worker = $this;
@@ -156,7 +152,7 @@ class ResqueWorker
 	{
         ResqueStat::incr('processed');
 		ResqueStat::incr('processed:' . $this->getID());
-		Resque::redis()->del('resque:worker:' . $this->getID());
+		Resque::redis()->del($this->redisKey_workerStarted());
 	}
 
 	public function job()
@@ -176,7 +172,7 @@ class ResqueWorker
      */
     public static function allWorkers()
     {
-        $items = Resque::redis()->smembers('resque:workers');
+        $items = Resque::redis()->smembers(self::redisKey_workerSet());
         if(!is_array($items)) {
             $items = array();
         }
@@ -192,9 +188,14 @@ class ResqueWorker
         return $workers;
     }
 
-    public static function key_workersSet()
+    public static function redisKey_workerSet()
     {
         return 'resque:workers';
+    }
+
+    public function redisKey_workerStarted()
+    {
+        return 'resque:worker:' . $this->_id . ':started';
     }
 
     private function waitJob()
@@ -205,7 +206,7 @@ class ResqueWorker
 
         $arr = Resque::redis()->blpop($list, Resque::kTimeout);
 
-        if(!is_array($arr)) {
+        if(empty($arr)) {
             return NULL;
         }
 
