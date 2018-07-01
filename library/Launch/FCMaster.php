@@ -14,7 +14,7 @@ class FCMaster extends Model
     public $logFile;
     public $pidFile;
 
-    public $workers;
+    public $leaders;
 
     private $_curPID;
     private $_subPIDs;
@@ -26,7 +26,7 @@ class FCMaster extends Model
         $this->logFile = NULL;
         $this->pidFile = NULL;
 
-        $this->workers = array();
+        $this->leaders = array();
     }
 
     protected function fc_afterGenerate($data = array())
@@ -89,14 +89,14 @@ class FCMaster extends Model
             'redisBackend' => 'redis',
             'logFile' => 'logFile',
             'pidFile' => 'pidFile',
-            'workers' => 'workers',
+            'leaders' => 'leaders',
         );
     }
 
     protected function fc_arrayItemClassMapper()
     {
         return array(
-            'workers' => '\FC\Resque\Launch\FCWorker'
+            'leaders' => '\FC\Resque\Launch\FCLeader'
         );
     }
 
@@ -177,18 +177,18 @@ class FCMaster extends Model
         $this->checkLaunchAble();
         $this->clearDeadWorkers();
 
-        foreach ($this->workers as $progress)
+        foreach ($this->leaders as $leader)
         {
-            if($progress instanceof FCWorker)
+            if($leader instanceof FCLeader)
             {
                 $pid = $this->fork();
 
                 if ($pid === 0) {
 
                     Resque::setBackend($this->redisBackend);
-                    $progress->loadIncludes();
+                    $leader->loadIncludes();
 
-                    $worker = new ResqueWorker($progress->queues, new ResqueTrigger());
+                    $worker = new ResqueWorker($leader->queues, new ResqueTrigger());
                     $worker->work();
 
                     return ;
