@@ -9,6 +9,7 @@ use FC\Utils\Model\Model;
 
 class FCMaster extends Model
 {
+    public $name;
     public $redisBackend;
     public $logFile;
     public $pidFile;
@@ -20,6 +21,7 @@ class FCMaster extends Model
 
     protected function fc_defaultInit()
     {
+        $this->name = NULL;
         $this->redisBackend = NULL;
         $this->logFile = NULL;
         $this->pidFile = NULL;
@@ -29,6 +31,10 @@ class FCMaster extends Model
 
     protected function fc_afterGenerate($data = array())
     {
+        if(empty($this->name)) {
+            die(__CLASS__ . " name error.\n");
+        }
+
         if(empty($this->redisBackend)) {
             die(__CLASS__ . " redisBackend error.\n");
         }
@@ -79,6 +85,7 @@ class FCMaster extends Model
     protected function fc_propertyMapper()
     {
         return array(
+            'name' => 'name',
             'redisBackend' => 'redis',
             'logFile' => 'logFile',
             'pidFile' => 'pidFile',
@@ -191,7 +198,8 @@ class FCMaster extends Model
 
         $this->savePIDInfos();
 
-        $worker = new ResqueWorker(array('RESQUE-SIGNAL'), new ResqueTrigger());
+        $queue = array($this->name . '-MASTER');
+        $worker = new ResqueWorker($queue, new ResqueTrigger());
         $worker->work();
     }
 }
