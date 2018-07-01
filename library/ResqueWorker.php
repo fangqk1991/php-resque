@@ -3,6 +3,7 @@
 namespace FC\Resque;
 
 use Exception;
+use FC\Resque\Core\IResqueTrigger;
 use FC\Resque\Core\Resque;
 use FC\Resque\Core\ResqueStat;
 use FC\Resque\Job\DirtyExitException;
@@ -30,11 +31,14 @@ class ResqueWorker
 	private $_currentJob = null;
 	private $_childPID = null;
 
-    public function __construct(array $queues, IResqueTrigger $trigger = NULL)
+    public function __construct(array $queues)
     {
         $this->_queues = $queues;
         $this->_id = php_uname('n') . ':'.getmypid() . ':' . implode(',', $this->_queues);
+    }
 
+    public function setTrigger(IResqueTrigger $trigger)
+    {
         $this->_trigger = $trigger;
     }
 

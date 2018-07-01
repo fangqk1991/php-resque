@@ -3,6 +3,7 @@
 namespace FC\Resque;
 
 use Exception;
+use FC\Resque\Core\IResqueTrigger;
 
 class ResqueTrigger implements IResqueTrigger
 {

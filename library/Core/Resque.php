@@ -108,13 +108,13 @@ class Resque
 	 * @param array $items
 	 * @return integer number of deleted items
 	 */
-	public static function dequeue($queue, $items = Array())
+	public static function dequeue($queue, $items = array())
 	{
-	    if(count($items) > 0) {
-		return self::removeItems($queue, $items);
-	    } else {
-		return self::removeList($queue);
-	    }
+        if(count($items) > 0) {
+            return self::removeItems($queue, $items);
+        } else {
+            return self::removeList($queue);
+        }
 	}
 
 	/**
@@ -219,7 +219,7 @@ class Resque
 	 * @param array $items
 	 * @return integer number of deleted items
 	 */
-	private static function removeItems($queue, $items = Array())
+	private static function removeItems($queue, $items = array())
 	{
 		$counter = 0;
 		$originalQueue = 'resque:queue:'. $queue;

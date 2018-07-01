@@ -188,7 +188,8 @@ class FCMaster extends Model
                     Resque::setBackend($this->redisBackend);
                     $leader->loadIncludes();
 
-                    $worker = new ResqueWorker($leader->queues, new ResqueTrigger());
+                    $worker = new ResqueWorker($leader->queues);
+                    $worker->setTrigger(new ResqueTrigger());
                     $worker->work();
 
                     return ;
@@ -199,7 +200,8 @@ class FCMaster extends Model
         $this->savePIDInfos();
 
         $queue = array($this->name . '-MASTER');
-        $worker = new ResqueWorker($queue, new ResqueTrigger());
+        $worker = new ResqueWorker($queue);
+        $worker->setTrigger(new ResqueTrigger());
         $worker->work();
     }
 }
