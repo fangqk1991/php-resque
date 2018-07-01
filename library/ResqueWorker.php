@@ -23,11 +23,6 @@ class ResqueWorker
 
 	private $_id;
 
-	/**
-	 * @var ResqueJob
-	 */
-	private $_currentJob = null;
-
     public function __construct(array $queues)
     {
         $this->_queues = $queues;
@@ -95,8 +90,6 @@ class ResqueWorker
 
 			$this->doneWorking();
 		}
-
-		$this->unregisterWorker();
 	}
 
 	/**
@@ -145,10 +138,6 @@ class ResqueWorker
 	 */
 	public function unregisterWorker()
 	{
-		if(is_object($this->_currentJob)) {
-			$this->_currentJob->fail(new DirtyExitException());
-		}
-
 		$id = $this->_id;
 		Resque::redis()->srem('resque:workers', $id);
 		Resque::redis()->del('resque:worker:' . $id);
@@ -163,7 +152,6 @@ class ResqueWorker
 	public function workingOn(ResqueJob $job)
 	{
 		$job->worker = $this;
-		$this->_currentJob = $job;
 		$job->updateStatus(JobStatus::STATUS_RUNNING);
 		$data = json_encode(array(
 			'queue' => $job->queue,
@@ -175,7 +163,6 @@ class ResqueWorker
 
 	public function doneWorking()
 	{
-		$this->_currentJob = null;
         ResqueStat::incr('processed');
 		ResqueStat::incr('processed:' . $this->getId());
 		Resque::redis()->del('resque:worker:' . $this->getId());
