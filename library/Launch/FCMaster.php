@@ -102,7 +102,7 @@ class FCMaster extends Model
         return $config;
     }
 
-    public function fork()
+    private function fork()
     {
         $pid = pcntl_fork();
 
@@ -118,7 +118,7 @@ class FCMaster extends Model
         return $pid;
     }
 
-    public function savePIDInfos()
+    private function savePIDInfos()
     {
         $pidList = $this->_subPIDs;
         array_unshift($pidList, posix_getpid());
@@ -143,7 +143,7 @@ class FCMaster extends Model
         $this->loadPIDInfos();
     }
 
-    public function checkLaunchAble()
+    private function checkLaunchAble()
     {
         if(($pid = $this->curPID()) > 0)
         {
@@ -151,7 +151,7 @@ class FCMaster extends Model
         }
     }
 
-    public function clearDeadWorkers()
+    private function clearDeadWorkers()
     {
         Resque::setBackend($this->redisBackend);
 
@@ -165,8 +165,32 @@ class FCMaster extends Model
         }
     }
 
-    public function runMaster()
+    public function run()
     {
+        $this->checkLaunchAble();
+        $this->clearDeadWorkers();
+
+        foreach ($this->workers as $progress)
+        {
+            if($progress instanceof FCWorker)
+            {
+                $pid = $this->fork();
+
+                if ($pid === 0) {
+
+                    Resque::setBackend($this->redisBackend);
+                    $progress->loadIncludes();
+
+                    $worker = new ResqueWorker($progress->queues, new ResqueTrigger());
+                    $worker->work();
+
+                    return ;
+                }
+            }
+        }
+
+        $this->savePIDInfos();
+
         $worker = new ResqueWorker(array('RESQUE-SIGNAL'), new ResqueTrigger());
         $worker->work();
     }
