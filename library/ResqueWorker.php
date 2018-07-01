@@ -182,33 +182,18 @@ class ResqueWorker
         }
 
         $workers = array_map(function($workerID) {
-            return self::find($workerID);
+            list($hostname, $pid, $queues) = explode(':', $workerID, 3);
+            $queues = explode(',', $queues);
+            $worker = new self($queues);
+            $worker->_id = $workerID;
+            return $worker;
         }, $items);
 
         return $workers;
     }
 
-    public static function exists($workerId)
+    public static function key_workersSet()
     {
-        return Resque::redis()->sismember('resque:workers', $workerId);
-    }
-
-    /**
-     * Given a worker ID, find it and return an instantiated worker class for it.
-     *
-     * @param string $workerID The ID of the worker.
-     * @return bool|ResqueWorker
-     */
-    public static function find($workerID)
-    {
-        if(!self::exists($workerID) || false === strpos($workerID, ":")) {
-            return false;
-        }
-
-        list($hostname, $pid, $queues) = explode(':', $workerID, 3);
-        $queues = explode(',', $queues);
-        $worker = new self($queues);
-        $worker->_id = $workerID;
-        return $worker;
+        return 'resque:workers';
     }
 }
