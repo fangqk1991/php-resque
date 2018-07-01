@@ -2,12 +2,7 @@
 
 namespace FC\Resque;
 
-use Exception;
 use FC\Resque\Core\Resque;
-use FC\Resque\Job\DirtyExitException;
-use FC\Resque\Job\JobStatus;
-use FC\Resque\Launch\FCMaster;
-use FC\Resque\Stat\Stat;
 
 class ResqueMaster extends ResqueWorker
 {
@@ -63,33 +58,5 @@ class ResqueMaster extends ResqueWorker
         $worker = new ResqueWorker($queues);
         $worker->setId($workerID);
         return $worker;
-    }
-
-    /**
-     * @var FCMaster
-     */
-    private $_progress;
-
-    public function initWithConfig($configFile)
-    {
-        $this->_progress = FCMaster::masterFromFile($configFile);
-    }
-
-    public function progress()
-    {
-        return $this->_progress;
-    }
-
-    public function redisBackend()
-    {
-        return $this->_progress->redisBackend;
-    }
-
-    public function checkLaunchAble()
-    {
-        if(($pid = $this->_progress->curPID()) > 0)
-        {
-            die("The application is running. Master PID: $pid.\n");
-        }
     }
 }

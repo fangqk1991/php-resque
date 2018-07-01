@@ -139,4 +139,12 @@ class FCMaster extends Model
 
         $this->loadPIDInfos();
     }
+
+    public function checkLaunchAble()
+    {
+        if(($pid = $this->curPID()) > 0)
+        {
+            die("The application is running. Master PID: $pid.\n");
+        }
+    }
 }
