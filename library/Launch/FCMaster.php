@@ -2,6 +2,9 @@
 
 namespace FC\Resque\Launch;
 
+use FC\Resque\Core\Resque;
+use FC\Resque\ResqueTrigger;
+use FC\Resque\ResqueWorker;
 use FC\Utils\Model\Model;
 
 class FCMaster extends Model
@@ -146,5 +149,25 @@ class FCMaster extends Model
         {
             die("The application is running. Master PID: $pid.\n");
         }
+    }
+
+    public function clearDeadWorkers()
+    {
+        Resque::setBackend($this->redisBackend);
+
+        $workers = ResqueWorker::allWorkers();
+        foreach($workers as $worker)
+        {
+            if($worker instanceof ResqueWorker)
+            {
+                $worker->unregisterWorker();
+            }
+        }
+    }
+
+    public function runMaster()
+    {
+        $worker = new ResqueWorker(array('RESQUE-SIGNAL'), new ResqueTrigger());
+        $worker->work();
     }
 }
