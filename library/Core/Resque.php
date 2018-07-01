@@ -2,6 +2,7 @@
 
 namespace FC\Resque\Core;
 
+use FC\Resque\ResqueJob;
 use Redis;
 use RuntimeException;
 
@@ -10,8 +11,8 @@ class Resque
 	const kVersion = '1.3';
     const kTimeout = 5;
 
-	public static $redis = null;
-	protected static $redisServer = null;
+	private static $redis = null;
+	private static $redisServer = null;
 
 	public static function setBackend($server)
 	{
@@ -187,9 +188,7 @@ class Resque
 	 */
 	public static function enqueue($queue, $class, $args = null, $trackStatus = false)
 	{
-		$id = Resque::generateJobId();
-		ResqueJob::create($queue, $class, $args, $trackStatus, $id);
-		return $id;
+		return ResqueJob::create($queue, $class, $args, $trackStatus);
 	}
 
 	/**
@@ -310,15 +309,5 @@ class Resque
 	    $counter = self::size($queue);
 	    $result = self::redis()->del('resque:queue:' . $queue);
 	    return ($result == 1) ? $counter : 0;
-	}
-
-	/*
-	 * Generate an identifier to attach to a job for status tracking.
-	 *
-	 * @return string
-	 */
-	public static function generateJobId()
-	{
-		return md5(uniqid('', true));
 	}
 }
