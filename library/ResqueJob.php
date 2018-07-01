@@ -137,28 +137,6 @@ class ResqueJob
         $this->getInstance()->perform($this->getArguments());
 	}
 
-	public function fail(Exception $exception)
-	{
-		$this->updateStatus(JobStatus::kStatusFailed);
-
-        {
-            $data = array(
-                'failed_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
-                'payload' => $this->payload,
-                'exception' => get_class($exception),
-                'error' => $exception->getMessage(),
-                'backtrace' => explode("\n", $exception->getTraceAsString()),
-                'worker' => $this->_workerID,
-                'queue' => $this->queue
-            );
-
-            Resque::redis()->rpush('resque:failed', json_encode($data));
-        }
-
-		ResqueStat::incr('failed');
-        ResqueStat::incr('failed:' . $this->_workerID);
-	}
-
 	/**
 	 * Re-queue the current job.
 	 * @return string

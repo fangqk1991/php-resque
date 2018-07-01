@@ -83,7 +83,7 @@ class ResqueWorker
             $exitStatus = pcntl_wexitstatus($status);
 
             if($exitStatus !== 0) {
-                $job->fail(new DirtyExitException(
+                $this->onJobFailed($job, new DirtyExitException(
                     'Job exited with exit code ' . $exitStatus
                 ));
             }
@@ -105,9 +105,7 @@ class ResqueWorker
 			$job->perform();
 		}
 		catch(Exception $e) {
-            if($this->_trigger)
-                $this->_trigger->onJobFailed($job, $e);
-			$job->fail($e);
+			$this->onJobFailed($job, $e);
 			return;
 		}
 
@@ -116,6 +114,29 @@ class ResqueWorker
         if($this->_trigger)
             $this->_trigger->onJobDone($job);
 	}
+
+	private function onJobFailed(ResqueJob $job, Exception $exception)
+    {
+        $job->updateStatus(JobStatus::kStatusFailed);
+
+        $data = array(
+            'failed_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
+            'payload' => $job->payload,
+            'exception' => get_class($exception),
+            'error' => $exception->getMessage(),
+            'backtrace' => explode("\n", $exception->getTraceAsString()),
+            'worker' => $this->getID(),
+            'queue' => $job->queue
+        );
+
+        Resque::redis()->rpush('resque:failed', json_encode($data));
+
+        ResqueStat::incr('failed');
+        ResqueStat::incr('failed:' . $this->getID());
+
+        if($this->_trigger)
+            $this->_trigger->onJobFailed($job, $exception);
+    }
 
 	private function queues()
 	{
