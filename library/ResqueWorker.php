@@ -27,7 +27,6 @@ class ResqueWorker
 	 * @var ResqueJob
 	 */
 	private $_currentJob = null;
-	private $_childPID = null;
 
     public function __construct(array $queues)
     {
@@ -44,11 +43,6 @@ class ResqueWorker
 	{
 		return Resque::redis()->sismember('resque:workers', $workerId);
 	}
-
-    public function setId($workerId)
-    {
-        $this->_id = $workerId;
-    }
 
     public function getId()
     {
@@ -75,36 +69,30 @@ class ResqueWorker
 
 			$this->workingOn($job);
 
-			$this->_childPID = Resque::fork();
+			$pid = Resque::fork();
 
 			// Forked and we're the child. Run the job.
-			if ($this->_childPID === 0 || $this->_childPID === false) {
+			if ($pid === 0) {
                 if($this->_trigger)
                     $this->_trigger->onJobPerform($job);
 
 				$this->perform($job);
-				if ($this->_childPID === 0) {
-					exit(0);
-				}
+                exit(0);
 			}
 
-			if($this->_childPID > 0) {
+            if($this->_trigger)
+                $this->_trigger->onSalveCreated($pid);
 
-                if($this->_trigger)
-                    $this->_trigger->onSalveCreated($this->_childPID);
+            // Wait until the child process finishes before continuing
+            pcntl_wait($status);
+            $exitStatus = pcntl_wexitstatus($status);
 
-				// Wait until the child process finishes before continuing
-				pcntl_wait($status);
-				$exitStatus = pcntl_wexitstatus($status);
+            if($exitStatus !== 0) {
+                $job->fail(new DirtyExitException(
+                    'Job exited with exit code ' . $exitStatus
+                ));
+            }
 
-				if($exitStatus !== 0) {
-					$job->fail(new DirtyExitException(
-						'Job exited with exit code ' . $exitStatus
-					));
-				}
-			}
-
-			$this->_childPID = null;
 			$this->doneWorking();
 		}
 
@@ -237,7 +225,7 @@ class ResqueWorker
         list($hostname, $pid, $queues) = explode(':', $workerID, 3);
         $queues = explode(',', $queues);
         $worker = new self($queues);
-        $worker->setId($workerID);
+        $worker->_id = $workerID;
         return $worker;
     }
 }
