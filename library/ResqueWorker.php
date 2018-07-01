@@ -44,7 +44,7 @@ class ResqueWorker
 
 		while(true) {
 
-            $job = self::waitJob();
+            $job = $this->waitJob();
 
 			if(!($job instanceof ResqueJob)) {
 				continue;
@@ -53,7 +53,18 @@ class ResqueWorker
             if($this->_trigger)
                 $this->_trigger->onJobFound($job);
 
-			$this->workingOn($job);
+
+            {
+                $job->worker = $this;
+                $job->updateStatus(JobStatus::STATUS_RUNNING);
+                $data = json_encode(array(
+                    'queue' => $job->queue,
+                    'run_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
+                    'payload' => $job->payload
+                ));
+                Resque::redis()->set($this->redisKey_workerInfo(), $data);
+            }
+
 
 			$pid = Resque::fork();
 
@@ -79,7 +90,9 @@ class ResqueWorker
                 ));
             }
 
-			$this->doneWorking();
+            ResqueStat::incr('processed');
+            ResqueStat::incr('processed:' . $this->getID());
+            Resque::redis()->del($this->redisKey_workerInfo());
 		}
 	}
 
@@ -135,25 +148,6 @@ class ResqueWorker
 		Resque::redis()->del($this->redisKey_workerStarted());
 		ResqueStat::clear('processed:' . $id);
         ResqueStat::clear('failed:' . $id);
-	}
-
-	public function workingOn(ResqueJob $job)
-	{
-		$job->worker = $this;
-		$job->updateStatus(JobStatus::STATUS_RUNNING);
-		$data = json_encode(array(
-			'queue' => $job->queue,
-			'run_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
-			'payload' => $job->payload
-		));
-		Resque::redis()->set($this->redisKey_workerInfo(), $data);
-	}
-
-	public function doneWorking()
-	{
-        ResqueStat::incr('processed');
-		ResqueStat::incr('processed:' . $this->getID());
-        Resque::redis()->del($this->redisKey_workerInfo());
 	}
 
 	public function job()
@@ -219,6 +213,6 @@ class ResqueWorker
         $queue = substr($arr[0], strlen('resque:queue:'));
         $payload = json_decode($arr[1], TRUE);
 
-        return new ResqueJob($queue, $payload);
+        return new ResqueJob($queue, $payload, $this->getID());
     }
 }
