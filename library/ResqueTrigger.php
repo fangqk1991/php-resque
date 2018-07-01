@@ -37,11 +37,6 @@ class ResqueTrigger implements IResqueTrigger
         $this->log(__FUNCTION__ . ': ' . $pid);
     }
 
-    public function onSignalReceived($msg)
-    {
-        $this->log(__FUNCTION__ . ': ' . $msg);
-    }
-
     private function log($msg)
     {
         fwrite(STDOUT, sprintf('%s %s%s', date('Y-m-d H:i:s'), $msg, PHP_EOL));

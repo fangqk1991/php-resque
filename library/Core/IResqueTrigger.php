@@ -14,6 +14,4 @@ interface IResqueTrigger
     public function onJobDone(ResqueJob $job);
     public function onJobFailed(ResqueJob $job, Exception $e);
     public function onSalveCreated($pid);
-
-    public function onSignalReceived($msg);
 }

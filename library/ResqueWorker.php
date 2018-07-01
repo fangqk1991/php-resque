@@ -21,8 +21,6 @@ class ResqueWorker
 	 */
 	private $_queues = array();
 
-	private $_shutdown = false;
-
 	private $_id;
 
 	/**
@@ -65,10 +63,6 @@ class ResqueWorker
         $this->registerWorker();
 
 		while(true) {
-
-			if($this->_shutdown) {
-				break;
-			}
 
             $job = ResqueJob::reserveBlocking($this->queues());
 
@@ -147,56 +141,6 @@ class ResqueWorker
 		}
 
 		return Resque::queues();
-	}
-
-	/**
-	 * Schedule a worker for shutdown. Will finish processing the current job
-	 * and when the timeout interval is reached, the worker will shut down.
-	 */
-	public function shutdown()
-	{
-        if($this->_trigger)
-            $this->_trigger->onSignalReceived(__FUNCTION__);
-
-		$this->_shutdown = true;
-	}
-
-	/**
-	 * Force an immediate shutdown of the worker, killing any child jobs
-	 * currently running.
-	 */
-	public function shutdownNow()
-	{
-		$this->shutdown();
-		$this->killChild();
-	}
-
-	/**
-	 * Kill a forked child job immediately. The job it is processing will not
-	 * be completed.s
-	 */
-	public function killChild()
-	{
-		if(!$this->_childPID) {
-            if($this->_trigger)
-                $this->_trigger->onSignalReceived(__FUNCTION__ . ' No child to kill.');
-			return;
-		}
-
-        if($this->_trigger)
-            $this->_trigger->onSignalReceived(__FUNCTION__ . ' Killing child at ' . $this->_childPID);
-
-		if(exec('ps -o pid,state -p ' . $this->_childPID, $output, $returnCode) && $returnCode != 1) {
-            if($this->_trigger)
-                $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] found, killing.', $this->_childPID));
-			posix_kill($this->_childPID, SIGKILL);
-			$this->_childPID = null;
-		}
-		else {
-            if($this->_trigger)
-                $this->_trigger->onSignalReceived(__FUNCTION__ . sprintf(' Child[%s] not found, restarting.', $this->_childPID));
-			$this->shutdown();
-		}
 	}
 
 	/**
