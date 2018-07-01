@@ -131,6 +131,7 @@ class ResqueWorker
 	{
 		$id = $this->_id;
 		Resque::redis()->srem(self::redisKey_workerSet(), $id);
+        Resque::redis()->del($this->redisKey_workerInfo());
 		Resque::redis()->del($this->redisKey_workerStarted());
 		ResqueStat::clear('processed:' . $id);
         ResqueStat::clear('failed:' . $id);
@@ -145,19 +146,19 @@ class ResqueWorker
 			'run_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
 			'payload' => $job->payload
 		));
-		Resque::redis()->set('resque:worker:' . $job->worker->getID(), $data);
+		Resque::redis()->set($this->redisKey_workerInfo(), $data);
 	}
 
 	public function doneWorking()
 	{
         ResqueStat::incr('processed');
 		ResqueStat::incr('processed:' . $this->getID());
-		Resque::redis()->del($this->redisKey_workerStarted());
+        Resque::redis()->del($this->redisKey_workerInfo());
 	}
 
 	public function job()
 	{
-		$job = Resque::redis()->get('resque:worker:' . $this->_id);
+		$job = Resque::redis()->get($this->redisKey_workerInfo());
 		if(!$job) {
 			return array();
 		}
@@ -193,9 +194,14 @@ class ResqueWorker
         return 'resque:workers';
     }
 
+    public function redisKey_workerInfo()
+    {
+        return 'resque:worker:' . $this->_id;
+    }
+
     public function redisKey_workerStarted()
     {
-        return 'resque:worker:' . $this->_id . ':started';
+        return $this->redisKey_workerInfo() . ':started';
     }
 
     private function waitJob()
