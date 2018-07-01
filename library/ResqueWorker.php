@@ -44,7 +44,7 @@ class ResqueWorker
 
 		while(true) {
 
-            $job = ResqueJob::reserveBlocking($this->queues());
+            $job = self::waitJob();
 
 			if(!($job instanceof ResqueJob)) {
 				continue;
@@ -120,7 +120,7 @@ class ResqueWorker
 	 */
 	public function registerWorker()
 	{
-		Resque::redis()->sadd('resque:workers', $this->_id);
+		Resque::redis()->sadd(self::key_workersSet(), $this->_id);
 		Resque::redis()->set('resque:worker:' . $this->_id . ':started', strftime('%a %b %d %H:%M:%S %Z %Y'));
 	}
 
@@ -130,7 +130,7 @@ class ResqueWorker
 	public function unregisterWorker()
 	{
 		$id = $this->_id;
-		Resque::redis()->srem('resque:workers', $id);
+		Resque::redis()->srem(self::key_workersSet(), $id);
 		Resque::redis()->del('resque:worker:' . $id);
 		Resque::redis()->del('resque:worker:' . $id . ':started');
 		ResqueStat::clear('processed:' . $id);
@@ -195,5 +195,23 @@ class ResqueWorker
     public static function key_workersSet()
     {
         return 'resque:workers';
+    }
+
+    private function waitJob()
+    {
+        $list = array_map(function ($queue) {
+            return 'resque:queue:' . $queue;
+        }, $this->queues());
+
+        $arr = Resque::redis()->blpop($list, Resque::kTimeout);
+
+        if(!is_array($arr)) {
+            return NULL;
+        }
+
+        $queue = substr($arr[0], strlen('resque:queue:'));
+        $payload = json_decode($arr[1], TRUE);
+
+        return new ResqueJob($queue, $payload);
     }
 }

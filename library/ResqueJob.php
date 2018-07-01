@@ -76,17 +76,6 @@ class ResqueJob
 		return $id;
 	}
 
-    public static function reserveBlocking(array $queues)
-	{
-		$item = Resque::blpop($queues, Resque::kTimeout);
-
-		if(!is_array($item)) {
-			return NULL;
-		}
-
-		return new ResqueJob($item['queue'], $item['payload']);
-	}
-
 	/**
 	 * Update the status of the current job.
 	 *
