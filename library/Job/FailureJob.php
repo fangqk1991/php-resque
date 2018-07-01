@@ -18,7 +18,7 @@ class FailureJob
         $data->exception = get_class($exception);
         $data->error = $exception->getMessage();
         $data->backtrace = explode("\n", $exception->getTraceAsString());
-        $data->worker = $worker->getId();
+        $data->worker = $worker->getID();
         $data->queue = $queue;
         $data = json_encode($data);
         Resque::redis()->rpush('resque:failed', $data);

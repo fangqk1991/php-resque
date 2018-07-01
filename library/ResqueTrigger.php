@@ -9,7 +9,7 @@ class ResqueTrigger implements IResqueTrigger
 {
     public function onWorkerStart(ResqueWorker $worker)
     {
-        $this->log('*** Starting worker: ' . $worker->getId());
+        $this->log('*** Starting worker: ' . $worker->getID());
     }
 
     public function onJobFound(ResqueJob $job)

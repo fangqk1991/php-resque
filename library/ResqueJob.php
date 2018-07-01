@@ -170,7 +170,7 @@ class ResqueJob
             $this->payload
 		);
 		ResqueStat::incr('failed');
-        ResqueStat::incr('failed:' . $this->worker->getId());
+        ResqueStat::incr('failed:' . $this->worker->getID());
 	}
 
 	/**

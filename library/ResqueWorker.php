@@ -11,17 +11,13 @@ use FC\Resque\Job\JobStatus;
 
 class ResqueWorker
 {
-	/**
-	* @var IResqueTrigger
-	*/
-	private $_trigger;
-
-	/**
-	 * @var array Array of all associated queues for this worker.
-	 */
+    private $_id;
 	private $_queues = array();
 
-	private $_id;
+    /**
+     * @var IResqueTrigger
+     */
+    private $_trigger;
 
     public function __construct(array $queues)
     {
@@ -34,12 +30,7 @@ class ResqueWorker
         $this->_trigger = $trigger;
     }
 
-	public static function exists($workerId)
-	{
-		return Resque::redis()->sismember('resque:workers', $workerId);
-	}
-
-    public function getId()
+    public function getID()
     {
         return $this->_id;
     }
@@ -158,14 +149,14 @@ class ResqueWorker
 			'run_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
 			'payload' => $job->payload
 		));
-		Resque::redis()->set('resque:worker:' . $job->worker->getId(), $data);
+		Resque::redis()->set('resque:worker:' . $job->worker->getID(), $data);
 	}
 
 	public function doneWorking()
 	{
         ResqueStat::incr('processed');
-		ResqueStat::incr('processed:' . $this->getId());
-		Resque::redis()->del('resque:worker:' . $this->getId());
+		ResqueStat::incr('processed:' . $this->getID());
+		Resque::redis()->del('resque:worker:' . $this->getID());
 	}
 
 	public function job()
@@ -195,6 +186,11 @@ class ResqueWorker
         }, $items);
 
         return $workers;
+    }
+
+    public static function exists($workerId)
+    {
+        return Resque::redis()->sismember('resque:workers', $workerId);
     }
 
     /**
