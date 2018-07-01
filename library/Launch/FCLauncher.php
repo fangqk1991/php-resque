@@ -2,15 +2,15 @@
 
 namespace FC\Resque\Launch;
 
-class Launcher
+class FCLauncher
 {
     private $_master;
     private $_launchFile;
 
-    public function __construct($launchFile, FCMaster $master)
+    public function __construct($launchFile, $configFile)
     {
         $this->_launchFile = $launchFile;
-        $this->_master = $master;
+        $this->_master = FCMaster::masterFromFile($configFile);
     }
 
     public function pidFile()
@@ -41,7 +41,7 @@ class Launcher
         }
 
         $this->println('Stopping php-resque...');
-        $this->_master->stop();
+        $this->_master->killPIDs();
     }
 
     public function checkStatus()
@@ -72,6 +72,9 @@ class Launcher
                 break;
             case 'status':
                 $this->checkStatus();
+                break;
+            case '--launch':
+                $this->_master->run();
                 break;
             default:
                 $this->println('Usage: {start|stop|restart|status}');

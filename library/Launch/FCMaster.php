@@ -125,7 +125,7 @@ class FCMaster extends Model
         file_put_contents($this->pidFile, implode(' ', $pidList));
     }
 
-    public function stop()
+    public function killPIDs()
     {
         foreach ($this->_subPIDs as $pid)
             posix_kill($pid, SIGKILL);
