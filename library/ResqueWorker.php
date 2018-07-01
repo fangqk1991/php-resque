@@ -53,10 +53,8 @@ class ResqueWorker
             if($this->_trigger)
                 $this->_trigger->onJobFound($job);
 
-
             {
-                $job->worker = $this;
-                $job->updateStatus(JobStatus::STATUS_RUNNING);
+                $job->updateStatus(JobStatus::kStatusRunning);
                 $data = json_encode(array(
                     'queue' => $job->queue,
                     'run_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
@@ -113,7 +111,7 @@ class ResqueWorker
 			return;
 		}
 
-		$job->updateStatus(JobStatus::STATUS_COMPLETE);
+		$job->updateStatus(JobStatus::kStatusComplete);
 
         if($this->_trigger)
             $this->_trigger->onJobDone($job);
@@ -173,8 +171,8 @@ class ResqueWorker
         }
 
         $workers = array_map(function($workerID) {
-            list($hostname, $pid, $queues) = explode(':', $workerID, 3);
-            $queues = explode(',', $queues);
+            list($hostname, $pid, $queuesStr) = explode(':', $workerID, 3);
+            $queues = explode(',', $queuesStr);
             $worker = new self($queues);
             $worker->_id = $workerID;
             return $worker;

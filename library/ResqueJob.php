@@ -6,7 +6,6 @@ use Exception;
 use FC\Resque\Core\Resque;
 use FC\Resque\Core\ResqueException;
 use FC\Resque\Core\ResqueStat;
-use FC\Resque\Job\FailureJob;
 use FC\Resque\Job\IResqueTask;
 use FC\Resque\Job\JobStatus;
 
@@ -29,12 +28,6 @@ class ResqueJob
 
 	private $_workerID;
 
-	/**
-	 * Instantiate a new instance of a job.
-	 *
-	 * @param string $queue The queue that the job belongs to.
-	 * @param array $payload array containing details of the job.
-	 */
 	public function __construct($queue, $payload, $workerID)
 	{
 		$this->queue = $queue;
@@ -146,13 +139,22 @@ class ResqueJob
 
 	public function fail(Exception $exception)
 	{
-		$this->updateStatus(JobStatus::STATUS_FAILED);
-		FailureJob::create(
-			$exception,
-            $this->_workerID,
-			$this->queue,
-            $this->payload
-		);
+		$this->updateStatus(JobStatus::kStatusFailed);
+
+        {
+            $data = array(
+                'failed_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
+                'payload' => $this->payload,
+                'exception' => get_class($exception),
+                'error' => $exception->getMessage(),
+                'backtrace' => explode("\n", $exception->getTraceAsString()),
+                'worker' => $this->_workerID,
+                'queue' => $this->queue
+            );
+
+            Resque::redis()->rpush('resque:failed', json_encode($data));
+        }
+
 		ResqueStat::incr('failed');
         ResqueStat::incr('failed:' . $this->_workerID);
 	}

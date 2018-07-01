@@ -6,10 +6,10 @@ use FC\Resque\Core\Resque;
 
 class JobStatus
 {
-	const STATUS_WAITING = 1;
-	const STATUS_RUNNING = 2;
-	const STATUS_FAILED = 3;
-	const STATUS_COMPLETE = 4;
+	const kStatusWaiting = 1;
+	const kStatusRunning = 2;
+	const kStatusFailed = 3;
+	const kStatusComplete = 4;
 
 	/**
 	 * @var string The ID of the job this status class refers back to.
@@ -26,8 +26,8 @@ class JobStatus
 	 * @var array Array of statuses that are considered final/complete.
 	 */
 	private static $completeStatuses = array(
-		self::STATUS_FAILED,
-		self::STATUS_COMPLETE
+		self::kStatusFailed,
+		self::kStatusComplete
 	);
 
 	/**
@@ -49,7 +49,7 @@ class JobStatus
 	public static function create($id)
 	{
 		$statusPacket = array(
-			'status' => self::STATUS_WAITING,
+			'status' => self::kStatusWaiting,
 			'updated' => time(),
 			'started' => time(),
 		);
@@ -68,7 +68,7 @@ class JobStatus
 			return false;
 		}
 
-		if(!Resque::redis()->exists((string)$this)) {
+		if(!Resque::redis()->exists($this->redisKey_statusID())) {
 			$this->isTracking = false;
 			return false;
 		}
@@ -92,11 +92,12 @@ class JobStatus
 			'status' => $status,
 			'updated' => time(),
 		);
-		Resque::redis()->set((string)$this, json_encode($statusPacket));
+		Resque::redis()->set($this->redisKey_statusID(), json_encode($statusPacket));
 
 		// Expire the status for completed jobs after 24 hours
-		if(in_array($status, self::$completeStatuses)) {
-			Resque::redis()->expire((string)$this, 86400);
+		if($status === self::kStatusFailed || $status === self::kStatusComplete)
+		{
+			Resque::redis()->expire($this->redisKey_statusID(), 86400);
 		}
 	}
 
@@ -112,7 +113,7 @@ class JobStatus
 			return false;
 		}
 
-		$statusPacket = json_decode(Resque::redis()->get((string)$this), true);
+		$statusPacket = json_decode(Resque::redis()->get($this->redisKey_statusID()), true);
 		if(!$statusPacket) {
 			return false;
 		}
@@ -125,7 +126,7 @@ class JobStatus
 	 */
 	public function stop()
 	{
-		Resque::redis()->del((string)$this);
+		Resque::redis()->del($this->redisKey_statusID());
 	}
 
 	/**
@@ -137,4 +138,9 @@ class JobStatus
 	{
 		return 'resque:job:' . $this->id . ':status';
 	}
+
+	public function redisKey_statusID()
+    {
+        return 'resque:job:' . $this->id . ':status';
+    }
 }
