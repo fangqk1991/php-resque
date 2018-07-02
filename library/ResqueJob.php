@@ -7,33 +7,73 @@ use FC\Resque\Core\Resque;
 use FC\Resque\Core\ResqueException;
 use FC\Resque\Core\ResqueStat;
 use FC\Resque\Job\IResqueTask;
-use FC\Resque\Job\JobStatus;
+use InvalidArgumentException;
 
 class ResqueJob
 {
-	/**
-	 * @var string The name of the queue that this job belongs to.
-	 */
+    const kStatusWaiting = 1;
+    const kStatusRunning = 2;
+    const kStatusFailed = 3;
+    const kStatusComplete = 4;
+
 	public $queue;
-
-	/**
-	 * @var array Array containing details of the job.
-	 */
 	public $payload;
+	private $_monitor;
 
 	/**
-	 * @var object|IResqueTask Instance of the class performing work for this job.
+	 * @var IResqueTask Instance of the class performing work for this job.
 	 */
-	private $instance;
+	private $taskClass;
 
-	private $_workerID;
-
-	public function __construct($queue, $payload, $workerID)
+	public function __construct($queue, $payload, $monitor = FALSE)
 	{
 		$this->queue = $queue;
 		$this->payload = $payload;
-		$this->_workerID = $workerID;
-	}
+		$this->_monitor = $monitor;
+
+        if (!isset($this->payload['args'])) {
+            $this->payload['args'] = array();
+        }
+
+        if (!isset($this->payload['id'])) {
+            $this->payload['id'] = md5(uniqid('', TRUE));
+        }
+    }
+
+    public function getArguments()
+    {
+        return $this->payload['args'];
+    }
+
+    public function getJobID()
+    {
+        return $this->payload['id'];
+    }
+
+    public function getClassName()
+    {
+        return $this->payload['class'];
+    }
+
+    private function redisKey_jobStatus()
+    {
+        return 'resque:job:' . $this->getJobID() . ':status';
+    }
+
+    public function addToQueue()
+    {
+        Resque::push($this->queue, $this->payload);
+
+        if($this->_monitor)
+        {
+            $statusPacket = array(
+                'status' => self::kStatusWaiting,
+                'updated' => time(),
+                'started' => time(),
+            );
+            Resque::redis()->set($this->redisKey_jobStatus(), json_encode($statusPacket));
+        }
+    }
 
 	/**
 	 * Create a new job and save it to the specified queue.
@@ -44,29 +84,27 @@ class ResqueJob
 	 * @param boolean $monitor Set to true to be able to monitor the status of a job.
 	 *
 	 * @return string
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
-	public static function create($queue, $class, $args = null, $monitor = false)
+	public static function create($queue, $class, array $args, $monitor = false)
 	{
-        $id = md5(uniqid('', TRUE));
-
 		if(!is_array($args)) {
-			throw new \InvalidArgumentException(
+			throw new InvalidArgumentException(
 				'Supplied $args must be an array.'
 			);
 		}
-		Resque::push($queue, array(
-			'class'	=> $class,
-			'args'	=> $args,
-			'id'	=> $id,
-			'queue_time' => microtime(true),
-		));
 
-		if($monitor) {
-			JobStatus::create($id);
-		}
+		$payload = array(
+            'class'	=> $class,
+            'args'	=> $args,
+            'id'	=> md5(uniqid('', TRUE)),
+            'queue_time' => microtime(true),
+        );
 
-		return $id;
+		$job = new ResqueJob($queue, $payload, $monitor);
+		$job->addToQueue();
+
+		return $job;
 	}
 
 	/**
@@ -76,12 +114,20 @@ class ResqueJob
 	 */
 	public function updateStatus($status)
 	{
-		if(empty($this->payload['id'])) {
-			return;
-		}
+	    if($this->_monitor)
+        {
+            $statusPacket = array(
+                'status' => $status,
+                'updated' => time(),
+            );
+            Resque::redis()->set($this->redisKey_jobStatus(), json_encode($statusPacket));
 
-		$statusInstance = new JobStatus($this->payload['id']);
-		$statusInstance->update($status);
+            // Expire the status for completed jobs after 24 hours
+            if($status === self::kStatusFailed || $status === self::kStatusComplete)
+            {
+                Resque::redis()->expire($this->redisKey_jobStatus(), 86400);
+            }
+        }
 	}
 
 	/**
@@ -91,22 +137,12 @@ class ResqueJob
 	 */
 	public function getStatus()
 	{
-		$status = new JobStatus($this->payload['id']);
-		return $status->get();
-	}
+        $statusPacket = json_decode(Resque::redis()->get($this->redisKey_jobStatus()), true);
+        if(!$statusPacket) {
+            return FALSE;
+        }
 
-	/**
-	 * Get the arguments supplied to this job.
-	 *
-	 * @return array Array of arguments.
-	 */
-	public function getArguments()
-	{
-		if (!isset($this->payload['args'])) {
-			return array();
-		}
-
-		return $this->payload['args'];
+        return intval($statusPacket['status']);
 	}
 
 	/**
@@ -116,7 +152,7 @@ class ResqueJob
 	 */
 	public function getInstance()
 	{
-		if (is_null($this->instance)) {
+		if (is_null($this->taskClass)) {
 
 		    $className = $this->payload['class'];
 
@@ -126,10 +162,10 @@ class ResqueJob
                 );
             }
 
-            $this->instance = new $className();
+            $this->taskClass = new $className();
 		}
 
-        return $this->instance;
+        return $this->taskClass;
 	}
 
 	public function perform()
@@ -143,13 +179,7 @@ class ResqueJob
 	 */
 	public function recreate()
 	{
-		$status = new JobStatus($this->payload['id']);
-		$monitor = false;
-		if($status->isTracking()) {
-			$monitor = true;
-		}
-
-		return self::create($this->queue, $this->payload['class'], $this->getArguments(), $monitor);
+		return self::create($this->queue, $this->getClassName(), $this->getArguments(), $this->_monitor);
 	}
 
 	public function __toString()
@@ -162,13 +192,10 @@ class ResqueJob
         $name = array(
             'Job{' . $this->queue .'}'
         );
-        if(!empty($this->payload['id'])) {
-            $name[] = 'ID: ' . $this->payload['id'];
-        }
-        $name[] = $this->payload['class'];
-        if(!empty($this->payload['args'])) {
-            $name[] = json_encode($this->payload['args']);
-        }
+        $name[] = 'ID: ' . $this->getJobID();
+        $name[] = $this->getClassName();
+        $name[] = json_encode($this->getArguments());
+
         return '(' . implode(' | ', $name) . ')';
     }
 }
