@@ -4,7 +4,7 @@ namespace FC\Resque\Core;
 
 use Exception;
 
-interface IResqueTrigger
+interface IResqueObserver
 {
     public function onWorkerStart(ResqueWorker $worker);
     public function onJobFound(ResqueJob $job);

@@ -9,21 +9,13 @@ class ResqueWorker
 {
     private $_id;
 	private $_queues = array();
-
-    /**
-     * @var IResqueTrigger
-     */
     private $_trigger;
 
     public function __construct(array $queues)
     {
         $this->_queues = $queues;
         $this->_id = php_uname('n') . ':'.getmypid() . ':' . implode(',', $this->_queues);
-    }
-
-    public function setTrigger(IResqueTrigger $trigger)
-    {
-        $this->_trigger = $trigger;
+        $this->_trigger = new ResqueTrigger();
     }
 
     public function getID()
@@ -33,8 +25,7 @@ class ResqueWorker
 
 	public function work()
 	{
-        if($this->_trigger)
-            $this->_trigger->onWorkerStart($this);
+        $this->_trigger->onWorkerStart($this);
 
         $this->registerWorker();
 
@@ -46,8 +37,7 @@ class ResqueWorker
 				continue;
 			}
 
-            if($this->_trigger)
-                $this->_trigger->onJobFound($job);
+            $this->_trigger->onJobFound($job);
 
             {
                 $data = json_encode(array(
@@ -63,15 +53,13 @@ class ResqueWorker
 
 			// Forked and we're the child. Run the job.
 			if ($pid === 0) {
-                if($this->_trigger)
-                    $this->_trigger->onJobPerform($job);
+                $this->_trigger->onJobPerform($job);
 
 				$this->perform($job);
                 exit(0);
 			}
 
-            if($this->_trigger)
-                $this->_trigger->onSalveCreated($pid);
+            $this->_trigger->onSalveCreated($pid);
 
             // Wait until the child process finishes before continuing
             pcntl_wait($status);
@@ -104,8 +92,7 @@ class ResqueWorker
 			return;
 		}
 
-        if($this->_trigger)
-            $this->_trigger->onJobDone($job);
+        $this->_trigger->onJobDone($job);
 	}
 
 	private function onJobFailed(ResqueJob $job, Exception $exception)
@@ -125,8 +112,7 @@ class ResqueWorker
         ResqueStat::incr('failed');
         ResqueStat::incr('failed:' . $this->getID());
 
-        if($this->_trigger)
-            $this->_trigger->onJobFailed($job, $exception);
+        $this->_trigger->onJobFailed($job, $exception);
     }
 
 	private function queues()

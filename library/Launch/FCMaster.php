@@ -189,7 +189,6 @@ class FCMaster extends Model
                     $leader->loadIncludes();
 
                     $worker = new ResqueWorker($leader->queues);
-                    $worker->setTrigger(new ResqueTrigger());
                     $worker->work();
 
                     return ;
@@ -201,7 +200,6 @@ class FCMaster extends Model
 
         $queue = array($this->name . '-MASTER');
         $worker = new ResqueWorker($queue);
-        $worker->setTrigger(new ResqueTrigger());
         $worker->work();
     }
 }
