@@ -1,8 +1,8 @@
 {
   "name": "EXAMPLE",
   "redis": "127.0.0.1:6488",
-  "logFile": "/var/www/run.local/php-resque.log",
-  "pidFile": "/var/www/run.local/php-resque.pid",
+  "logFile": "${__DIR__}/../run.local/php-resque.log",
+  "pidFile": "${__DIR__}/../run.local/php-resque.pid",
   "leaders": [
     {
       "name": "TASK_1",
@@ -10,7 +10,7 @@
         "TASK_1"
       ],
       "includes": [
-        "/var/www/resque-lib/examples/ResqueJobsEx.php"
+        "${__DIR__}/../examples/ResqueJobsEx.php"
       ]
     },
     {
@@ -19,7 +19,7 @@
         "TASK_2"
       ],
       "includes": [
-        "/var/www/resque-lib/examples/ResqueJobsEx.php"
+        "${__DIR__}/../examples/ResqueJobsEx.php"
       ]
     }
   ]

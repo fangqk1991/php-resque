@@ -102,6 +102,7 @@ class FCMaster extends Model
     public static function masterFromFile($configFile)
     {
         $content = file_get_contents($configFile);
+        $content = preg_replace('#\$\{__DIR__\}#', dirname($configFile), $content);
         $data = json_decode($content, TRUE);
         $config = new self();
         $config->fc_generate($data);
