@@ -152,9 +152,9 @@ class Resque
 	 *
 	 * @return string|boolean Job ID when the job was created, false if creation was cancelled due to beforeEnqueue
 	 */
-	public static function enqueue($queue, $class, $args = null, $trackStatus = false)
+	public static function enqueue($queue, $class, $args = array())
 	{
-		return ResqueJob::create($queue, $class, $args, $trackStatus);
+		return ResqueJob::create($queue, $class, $args);
 	}
 
 	/**

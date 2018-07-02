@@ -53,7 +53,6 @@ class ResqueWorker
                 $this->_trigger->onJobFound($job);
 
             {
-                $job->updateStatus(ResqueJob::kStatusRunning);
                 $data = json_encode(array(
                     'queue' => $job->queue,
                     'run_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
@@ -108,16 +107,12 @@ class ResqueWorker
 			return;
 		}
 
-		$job->updateStatus(ResqueJob::kStatusComplete);
-
         if($this->_trigger)
             $this->_trigger->onJobDone($job);
 	}
 
 	private function onJobFailed(ResqueJob $job, Exception $exception)
     {
-        $job->updateStatus(ResqueJob::kStatusFailed);
-
         $data = array(
             'failed_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
             'payload' => $job->payload,

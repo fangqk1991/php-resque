@@ -2,29 +2,20 @@
 
 namespace FC\Resque;
 
-use Exception;
 use FC\Resque\Core\Resque;
 use FC\Resque\Core\ResqueException;
-use FC\Resque\Core\ResqueStat;
 use FC\Resque\Job\IResqueTask;
 use InvalidArgumentException;
 
 class ResqueJob
 {
-    const kStatusWaiting = 1;
-    const kStatusRunning = 2;
-    const kStatusFailed = 3;
-    const kStatusComplete = 4;
-
 	public $queue;
 	public $payload;
-	private $_monitor;
 
-	public function __construct($queue, $payload, $monitor = FALSE)
+	public function __construct($queue, $payload)
 	{
 		$this->queue = $queue;
 		$this->payload = $payload;
-		$this->_monitor = $monitor;
 
         if (!isset($this->payload['args'])) {
             $this->payload['args'] = array();
@@ -58,16 +49,6 @@ class ResqueJob
     public function addToQueue()
     {
         Resque::push($this->queue, $this->payload);
-
-        if($this->_monitor)
-        {
-            $statusPacket = array(
-                'status' => self::kStatusWaiting,
-                'updated' => time(),
-                'started' => time(),
-            );
-            Resque::redis()->set($this->redisKey_jobStatus(), json_encode($statusPacket));
-        }
     }
 
 	/**
@@ -81,7 +62,7 @@ class ResqueJob
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	public static function create($queue, $class, array $args, $monitor = false)
+	public static function create($queue, $class, array $args)
 	{
 		if(!is_array($args)) {
 			throw new InvalidArgumentException(
@@ -96,33 +77,10 @@ class ResqueJob
             'queue_time' => microtime(true),
         );
 
-		$job = new ResqueJob($queue, $payload, $monitor);
+		$job = new ResqueJob($queue, $payload);
 		$job->addToQueue();
 
 		return $job;
-	}
-
-	/**
-	 * Update the status of the current job.
-	 *
-	 * @param int $status Status constant from Resque_Job_Status indicating the current status of a job.
-	 */
-	public function updateStatus($status)
-	{
-	    if($this->_monitor)
-        {
-            $statusPacket = array(
-                'status' => $status,
-                'updated' => time(),
-            );
-            Resque::redis()->set($this->redisKey_jobStatus(), json_encode($statusPacket));
-
-            // Expire the status for completed jobs after 24 hours
-            if($status === self::kStatusFailed || $status === self::kStatusComplete)
-            {
-                Resque::redis()->expire($this->redisKey_jobStatus(), 86400);
-            }
-        }
 	}
 
 	/**
@@ -167,7 +125,7 @@ class ResqueJob
 	 */
 	public function recreate()
 	{
-		return self::create($this->queue, $this->getClassName(), $this->getArguments(), $this->_monitor);
+		return self::create($this->queue, $this->getClassName(), $this->getArguments());
 	}
 
 	public function __toString()

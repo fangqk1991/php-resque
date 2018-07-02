@@ -5,12 +5,8 @@ require_once __DIR__ . '/MyConfigEx.php';
 
 use FC\Resque\Core\Resque;
 
-class MyResqueEx
+class MyResqueEx extends Resque
 {
-    public static function enqueue($queue, $task, $args)
-    {
-        Resque::enqueue($queue, $task, $args, TRUE);
-    }
 }
 
 Resque::setBackend(MyConfigEx::Resque_RedisEnd);
