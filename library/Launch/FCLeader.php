@@ -30,7 +30,7 @@ class FCLeader extends Model
         foreach ($this->includes as $file)
         {
             if(!file_exists($file)) {
-                die(__CLASS__ . "$file not exists.\n");
+                die(__CLASS__ . " $file not exists.\n");
             }
         }
     }
