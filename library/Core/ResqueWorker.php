@@ -1,11 +1,8 @@
 <?php
 
-namespace FC\Resque;
+namespace FC\Resque\Core;
 
 use Exception;
-use FC\Resque\Core\IResqueTrigger;
-use FC\Resque\Core\Resque;
-use FC\Resque\Core\ResqueStat;
 use FC\Resque\Job\DirtyExitException;
 
 class ResqueWorker

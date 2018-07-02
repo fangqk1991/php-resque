@@ -2,7 +2,6 @@
 
 namespace FC\Resque\Core;
 
-use FC\Resque\ResqueJob;
 use Redis;
 use RuntimeException;
 

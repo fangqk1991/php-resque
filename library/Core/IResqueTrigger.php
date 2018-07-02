@@ -3,8 +3,6 @@
 namespace FC\Resque\Core;
 
 use Exception;
-use FC\Resque\ResqueJob;
-use FC\Resque\ResqueWorker;
 
 interface IResqueTrigger
 {

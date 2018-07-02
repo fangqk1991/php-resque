@@ -1,9 +1,7 @@
 <?php
 
-namespace FC\Resque;
+namespace FC\Resque\Core;
 
-use FC\Resque\Core\Resque;
-use FC\Resque\Core\ResqueException;
 use FC\Resque\Job\IResqueTask;
 use InvalidArgumentException;
 
