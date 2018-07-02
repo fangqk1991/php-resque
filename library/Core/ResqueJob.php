@@ -41,7 +41,11 @@ class ResqueJob
 
     public function addToQueue()
     {
-        Resque::push($this->queue, $this->payload);
+        $queue = $this->queue;
+        $data = json_encode($this->payload);
+
+        Resque::redis()->sAdd('resque:queues', $queue);
+        Resque::redis()->rpush('resque:queue:' . $queue, $data);
     }
 
 	/**

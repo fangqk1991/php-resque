@@ -3,7 +3,6 @@
 namespace FC\Resque\Launch;
 
 use FC\Resque\Core\Resque;
-use FC\Resque\Core\ResqueTrigger;
 use FC\Resque\Core\ResqueWorker;
 use FC\Utils\Model\Model;
 
@@ -111,7 +110,7 @@ class FCMaster extends Model
 
     private function fork()
     {
-        $pid = pcntl_fork();
+        $pid = Resque::fork();
 
         if($pid === -1)
         {

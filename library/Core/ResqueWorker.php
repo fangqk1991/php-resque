@@ -121,7 +121,7 @@ class ResqueWorker
 			return $this->_queues;
 		}
 
-		return Resque::queues();
+		return ResqueQueue::queues();
 	}
 
 	/**
