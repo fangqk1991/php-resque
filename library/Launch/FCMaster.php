@@ -3,7 +3,7 @@
 namespace FC\Resque\Launch;
 
 use FC\Resque\Core\Resque;
-use FC\Resque\ResqueTrigger;
+use FC\Resque\Core\ResqueTrigger;
 use FC\Resque\ResqueWorker;
 use FC\Utils\Model\Model;
 

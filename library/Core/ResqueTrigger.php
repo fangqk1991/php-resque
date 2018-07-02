@@ -1,9 +1,10 @@
 <?php
 
-namespace FC\Resque;
+namespace FC\Resque\Core;
 
 use Exception;
-use FC\Resque\Core\IResqueTrigger;
+use FC\Resque\ResqueJob;
+use FC\Resque\ResqueWorker;
 
 class ResqueTrigger implements IResqueTrigger
 {

@@ -41,11 +41,6 @@ class ResqueJob
         return $this->payload['class'];
     }
 
-    private function redisKey_jobStatus()
-    {
-        return 'resque:job:' . $this->getJobID() . ':status';
-    }
-
     public function addToQueue()
     {
         Resque::push($this->queue, $this->payload);
@@ -57,7 +52,6 @@ class ResqueJob
 	 * @param string $queue The name of the queue to place the job in.
 	 * @param string $class The name of the class that contains the code to execute the job.
 	 * @param array $args Any optional arguments that should be passed when the job is executed.
-	 * @param boolean $monitor Set to true to be able to monitor the status of a job.
 	 *
 	 * @return string
 	 * @throws InvalidArgumentException
@@ -81,21 +75,6 @@ class ResqueJob
 		$job->addToQueue();
 
 		return $job;
-	}
-
-	/**
-	 * Return the status of the current job.
-	 *
-	 * @return int The status of the job as one of the Resque_Job_Status constants.
-	 */
-	public function getStatus()
-	{
-        $statusPacket = json_decode(Resque::redis()->get($this->redisKey_jobStatus()), true);
-        if(!$statusPacket) {
-            return FALSE;
-        }
-
-        return intval($statusPacket['status']);
 	}
 
 	public function perform()
@@ -126,11 +105,6 @@ class ResqueJob
 	public function recreate()
 	{
 		return self::create($this->queue, $this->getClassName(), $this->getArguments());
-	}
-
-	public function __toString()
-	{
-	    return $this->getDescription();
 	}
 
 	public function getDescription()
