@@ -20,11 +20,6 @@ class ResqueJob
 	public $payload;
 	private $_monitor;
 
-	/**
-	 * @var IResqueTask Instance of the class performing work for this job.
-	 */
-	private $taskClass;
-
 	public function __construct($queue, $payload, $monitor = FALSE)
 	{
 		$this->queue = $queue;
@@ -145,32 +140,25 @@ class ResqueJob
         return intval($statusPacket['status']);
 	}
 
-	/**
-	 * Get the instantiated object for this job that will be performing work.
-	 * @return IResqueTask Instance of the object that this job belongs to.
-	 * @throws ResqueException
-	 */
-	public function getInstance()
-	{
-		if (is_null($this->taskClass)) {
-
-		    $className = $this->payload['class'];
-
-            if (!class_exists($className) || !(new $className instanceof IResqueTask)) {
-                throw new ResqueException(
-                    'Could not find job class ' . $className . '.'
-                );
-            }
-
-            $this->taskClass = new $className();
-		}
-
-        return $this->taskClass;
-	}
-
 	public function perform()
 	{
-        $this->getInstance()->perform($this->getArguments());
+        $className = $this->getClassName();
+
+        if (!class_exists($className)) {
+            throw new ResqueException(
+                'Could not find job class ' . $className . '.'
+            );
+        }
+
+        $task = new $className();
+        if(!($task instanceof IResqueTask))
+        {
+            throw new ResqueException(
+                $className . ' do not implements IResqueTask.'
+            );
+        }
+
+        $task->perform($this->getArguments());
 	}
 
 	/**
