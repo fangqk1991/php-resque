@@ -13,6 +13,13 @@ class Resque
 	private $_redisBackend;
 	private $_redis;
 
+	private $_observers;
+
+	private function __construct()
+    {
+        $this->_observers = array();
+    }
+
     private static $_instance;
     private static function getInstance()
     {
@@ -72,4 +79,14 @@ class Resque
 	{
 		return ResqueJob::create($queue, $class, $args);
 	}
+
+	public static function addObserve(IResqueObserver $observer)
+    {
+        array_push(self::getInstance()->_observers, $observer);
+    }
+
+    public static function observers()
+    {
+        return self::getInstance()->_observers;
+    }
 }

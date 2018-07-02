@@ -4,25 +4,18 @@ namespace FC\Resque\Core;
 
 use Exception;
 
-class ResqueTrigger implements IResqueObserver
+class ResqueTrigger
 {
-    private $_observers;
-
-    public function __construct()
+    private function observers()
     {
-        $this->_observers = array();
-    }
-
-    public function addObserver(IResqueObserver $observer)
-    {
-        array_push($this->_observers, $observer);
+        return Resque::observers();
     }
 
     public function onWorkerStart(ResqueWorker $worker)
     {
         $this->log('*** Starting worker: ' . $worker->getID());
 
-        foreach ($this->_observers as $observer)
+        foreach ($this->observers() as $observer)
         {
             if($observer instanceof IResqueObserver)
             {
@@ -35,7 +28,7 @@ class ResqueTrigger implements IResqueObserver
     {
         $this->log(__FUNCTION__ . ': ' . $job->getDescription());
 
-        foreach ($this->_observers as $observer)
+        foreach ($this->observers() as $observer)
         {
             if($observer instanceof IResqueObserver)
             {
@@ -48,7 +41,7 @@ class ResqueTrigger implements IResqueObserver
     {
         $this->log(__FUNCTION__ . ': ' . $job->getDescription());
 
-        foreach ($this->_observers as $observer)
+        foreach ($this->observers() as $observer)
         {
             if($observer instanceof IResqueObserver)
             {
@@ -61,7 +54,7 @@ class ResqueTrigger implements IResqueObserver
     {
         $this->log(__FUNCTION__ . ': ' . $job->getDescription());
 
-        foreach ($this->_observers as $observer)
+        foreach ($this->observers() as $observer)
         {
             if($observer instanceof IResqueObserver)
             {
@@ -74,7 +67,7 @@ class ResqueTrigger implements IResqueObserver
     {
         $this->log(__FUNCTION__ . ': ' . $job->getDescription() . ' ' . $e->getMessage());
 
-        foreach ($this->_observers as $observer)
+        foreach ($this->observers() as $observer)
         {
             if($observer instanceof IResqueObserver)
             {
@@ -87,7 +80,7 @@ class ResqueTrigger implements IResqueObserver
     {
         $this->log(__FUNCTION__ . ': ' . $pid);
 
-        foreach ($this->_observers as $observer)
+        foreach ($this->observers() as $observer)
         {
             if($observer instanceof IResqueObserver)
             {
