@@ -1,10 +1,26 @@
 {
+  "name": "EXAMPLE",
   "redis": "127.0.0.1:6488",
-  "queues": [
-    "TASK_1",
-    "TASK_2"
-  ],
-  "includes": [
-    "~/php-resque-1/examples/ResqueJobs.php"
+  "logFile": "/var/www/run.local/php-resque.log",
+  "pidFile": "/var/www/run.local/php-resque.pid",
+  "leaders": [
+    {
+      "name": "TASK_1",
+      "queues": [
+        "TASK_1"
+      ],
+      "includes": [
+        "/var/www/resque-lib/examples/ResqueJobsEx.php"
+      ]
+    },
+    {
+      "name": "TASK_2",
+      "queues": [
+        "TASK_2"
+      ],
+      "includes": [
+        "/var/www/resque-lib/examples/ResqueJobsEx.php"
+      ]
+    }
   ]
 }
