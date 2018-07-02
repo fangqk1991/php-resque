@@ -1,37 +1,20 @@
 # php-resque
-异步任务 master 的组织形式可能是
+本工程借鉴了 [chrisboulton / php-resque](https://github.com/chrisboulton/php-resque) 的代码实现。
 
-1. 每个应用各有一个 master
-2. 整个操作系统只有一个 master
-3. 操作系统可以存在多个 master，每个 master 管辖若干应用
-
-实际应用中，形式 3 较为合理，因为部分应用间存在事件通信的情景不在少数。
-
-不同 master 依赖的配置、各类数据应完全独立，如采用不同的 Redis 端口、pid 文件、log 文件。
-
-本工程基于 [chrisboulton / php-resque](https://github.com/chrisboulton/php-resque)，在此基础上建立单 master 对多应用的调用形式，以及相关的调用脚本。
+### 一些设计
+* 在等待任务方面，本工程完全采用 blpop 的方式，避免轮询引发的任务执行延时问题
+* 采用 FCMaster -> FCLeader -> Workers 的组织方式，Master 管理若干 Leader，每个 Leader 为独立进程，在收到任务时，fork 自身成为 Worker 执行任务，待 Worker 执行完毕退出，Leader 继续运行等待下一任务。
 
 ### 目录 / 文件说明
-* **config.examples**: 配置示例文件目录，请将所有文件复制到 config.local 目录中，并删去 .example 后缀
-* **config.local**: 本地配置目录，请根据实际情况将编辑相关配置文件内容
+* **examples**: 一些实例
+* **config.local**: 本地配置目录，可根据实际情况将编辑相关配置文件内容
 * **library**: 核心代码
-* **php-resque-master.sh**: php-resque 调用脚本
+* **php-resque.php**: php-resque 调用脚本
 
 ### 运行要求
-* PHP 5.3+
+* PHP 5.4+
 * Redis 2.2+
 * Composer
-
-### Master 使用
-#### 0. 下载本工程
-#### 1. 安装依赖库
-```
-composer install
-```
-
-#### 2. 编辑 `config.local/resque.main.config`
-
-#### 3. 编辑 `config.local/ResqueMainJobs.php`
 
 ### 应用工程使用
 #### 0. 在应用工程 composer.json 中添加 php-resque
@@ -48,18 +31,17 @@ composer install
 composer install
 ```
 
-#### 2. 引入 autoload 文件
-```
-require 'vendor/autoload.php';
-```
+#### 2. 启动服务
+* 参考 `php-resque-example.php` 建立启动脚本及相关配置文件
+* 执行启动脚本
 
-#### 3. 定义异步任务
-* 异步任务继承于 `ResqueTaskBase.php`，可参考 `SomeTask.php`
+#### 3. 任务定义
+* 任务文件需要继承 `IResqueTask`，参考 `SomeTask` / `SomeTask2`
 
 #### 4. 使用案例
-可参考 `MyResqueEx.php` 建立一个本地化的 `MyResque.php` 文件
+可参考 `MyResqueEx.php` 和 `enqueue.php` 调用
 
 ```
-MyResque::enqueue('TASK_2', 'SomeTask2', array());
-MyResque::enqueue('TASK_1', '\FC\Example\SomeTask', array());
+MyResqueEx::enqueue('TASK_1', '\FC\Example\SomeTask', array('delay' => 10));
+MyResqueEx::enqueue('TASK_2', 'SomeTask2', array('arg-2' => 'arg-2'));
 ```

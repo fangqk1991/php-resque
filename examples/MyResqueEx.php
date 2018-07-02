@@ -9,5 +9,5 @@ class MyResqueEx extends Resque
 {
 }
 
-Resque::setBackend(MyConfigEx::Resque_RedisEnd);
+MyResqueEx::setBackend(MyConfigEx::Resque_RedisEnd);
 
