@@ -1,6 +1,7 @@
 {
   "name": "EXAMPLE",
   "redis": "127.0.0.1:6488",
+  "use_schedule": false,
   "logFile": "${__DIR__}/../run.local/php-resque.log",
   "pidFile": "${__DIR__}/../run.local/php-resque.pid",
   "leaders": [

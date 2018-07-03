@@ -53,7 +53,7 @@ class ScheduleLeader
             if($job instanceof ScheduleJob)
             {
                 $job->run();
-                $this->log($jobKey . ' consumed.');
+                $this->log($jobKey . ' execute..');
             }
         }
     }

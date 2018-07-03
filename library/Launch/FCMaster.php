@@ -4,6 +4,7 @@ namespace FC\Resque\Launch;
 
 use FC\Resque\Core\Resque;
 use FC\Resque\Core\ResqueWorker;
+use FC\Resque\Schedule\ScheduleLeader;
 use FC\Utils\Model\Model;
 
 class FCMaster extends Model
@@ -12,6 +13,7 @@ class FCMaster extends Model
     public $redisBackend;
     public $logFile;
     public $pidFile;
+    public $useSchedule;
 
     public $leaders;
 
@@ -24,6 +26,7 @@ class FCMaster extends Model
         $this->redisBackend = NULL;
         $this->logFile = NULL;
         $this->pidFile = NULL;
+        $this->useSchedule = FALSE;
 
         $this->leaders = array();
     }
@@ -85,6 +88,7 @@ class FCMaster extends Model
     {
         return array(
             'name' => 'name',
+            'useSchedule' => 'use_schedule',
             'redisBackend' => 'redis',
             'logFile' => 'logFile',
             'pidFile' => 'pidFile',
@@ -193,6 +197,19 @@ class FCMaster extends Model
 
                     return ;
                 }
+            }
+        }
+
+        if($this->useSchedule)
+        {
+            $pid = $this->fork();
+
+            if ($pid === 0) {
+
+                $leader = new ScheduleLeader($this->redisBackend);
+                $leader->watch();
+
+                return ;
             }
         }
 
