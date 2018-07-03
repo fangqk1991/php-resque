@@ -162,6 +162,22 @@ class FCMaster extends Model
         }
     }
 
+    public function checkConfig()
+    {
+        if($this->useSchedule)
+        {
+            Resque::setBackend($this->redisBackend);
+
+            // Please ignore this warning, redis config get can not input the $value.
+            $result = Resque::redis()->config('GET', 'notify-keyspace-events');
+            $str = $result['notify-keyspace-events'];
+            if(strpos($str, 'E') === FALSE || strpos($str, 'x') === FALSE)
+            {
+                die("redis configurations error, please see https://fqk.io/about-timing-task/ \n");
+            }
+        }
+    }
+
     private function clearDeadWorkers()
     {
         Resque::setBackend($this->redisBackend);
@@ -178,6 +194,7 @@ class FCMaster extends Model
 
     public function run()
     {
+        $this->checkConfig();
         $this->checkLaunchAble();
         $this->clearDeadWorkers();
 

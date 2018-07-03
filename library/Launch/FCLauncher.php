@@ -27,6 +27,8 @@ class FCLauncher
             return ;
         }
 
+        $this->_master->checkConfig();
+
         $this->println('Starting php-resque...');
         passthru(sprintf('nohup php "%s" --launch >> "%s" 2>&1 &',
             $this->_launchFile, $this->_master->logFile));
