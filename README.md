@@ -39,7 +39,7 @@ composer install
 * 任务文件需要继承 `IResqueTask`，参考 `SomeTask` / `SomeTask2`
 
 #### 4. 使用案例
-可参考 `MyResqueEx.php` 和 `enqueue.php` 调用
+可参考 `MyResqueEx.php` 和 `test-resque.php` 调用
 
 ```
 MyResqueEx::enqueue('TASK_1', '\FC\Example\SomeTask', array('delay' => 10));

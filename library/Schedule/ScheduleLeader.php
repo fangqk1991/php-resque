@@ -2,19 +2,36 @@
 
 namespace FC\Resque\Schedule;
 
-use FC\Resque\Core\Resque;
+use Redis;
 
 class ScheduleLeader
 {
     const kPrefix = 'schedule:';
 
+    private $_redisHost;
+    private $_redisPort;
+
+    public function __construct($redisBackend)
+    {
+        list($host, $port) = explode(':', $redisBackend);
+        $this->_redisHost = $host;
+        $this->_redisPort = $port;
+    }
+
     public function watch()
     {
         $this->log('*** Starting ScheduleLeader ');
-        Resque::redis()->psubscribe(array('__key*__:expired'), function ($redis, $pattern, $channel, $t_key) {
-            if(strpos($t_key, self::kPrefix) === 0)
+
+        $this->consumeJobs();
+
+        $redis = new Redis();
+        $redis->connect($this->_redisHost, $this->_redisPort);
+        $redis->setOption(Redis::OPT_READ_TIMEOUT, -1);
+
+        $redis->psubscribe(array('__key*__:expired'), function ($redis, $pattern, $channel, $flagKey) {
+            if(strpos($flagKey, self::kPrefix) === 0)
             {
-                var_dump($t_key);
+                $this->consumeJobs();
             }
         });
     }
@@ -22,5 +39,22 @@ class ScheduleLeader
     private function log($msg)
     {
         fwrite(STDOUT, sprintf('%s %s%s', date('Y-m-d H:i:s'), $msg, PHP_EOL));
+    }
+
+    private function consumeJobs()
+    {
+        $redis = new Redis();
+        $redis->connect($this->_redisHost, $this->_redisPort);
+
+        $items = $redis->zRangeByScore('schedule:jobs-zset', 0, time());
+        foreach ($items as $jobKey)
+        {
+            $job = ScheduleJob::jobWithPayloadKey($jobKey);
+            if($job instanceof ScheduleJob)
+            {
+                $job->run();
+                $this->log($jobKey . ' consumed.');
+            }
+        }
     }
 }

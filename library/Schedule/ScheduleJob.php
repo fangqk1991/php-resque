@@ -2,7 +2,6 @@
 
 namespace FC\Resque\Schedule;
 
-use Exception;
 use FC\Resque\Core\Resque;
 use InvalidArgumentException;
 
@@ -72,7 +71,7 @@ class ScheduleJob
 
     private function redisKey_jobsSet()
     {
-        return sprintf('schedule:jobs-zset');
+        return 'schedule:jobs-zset';
     }
 
     public function performAfterDelay($seconds)
@@ -105,18 +104,17 @@ class ScheduleJob
 
     public function cancel()
     {
-        $redis = self::redis();
-
-        $redis->del($this->redisKey_jobFlag());
-        $redis->del($this->redisKey_jobPayload());
-        $redis->del($this->redisKey_jobsSetForQueue());
-        $redis->del($this->redisKey_jobsSet());
+        $this->removeJob();
     }
 
     public function run()
     {
         Resque::enqueue($this->getQueue(), $this->getClassName(), $this->getArguments());
+        $this->removeJob();
+    }
 
+    private function removeJob()
+    {
         $redis = self::redis();
         $redis->del($this->redisKey_jobFlag());
         $redis->del($this->redisKey_jobPayload());
@@ -147,16 +145,16 @@ class ScheduleJob
         return NULL;
     }
 
-    public static function create($queue, $uid, $class, array $args)
+    public static function create($uid, $queue, $class, array $args)
     {
-        $obj = self::find($queue, $uid);
-
-        if($obj instanceof self)
-        {
-            throw new Exception(
-                sprintf('ScheduleJob: %s:%s exists.', $queue, $uid)
-            );
-        }
+//        $obj = self::find($queue, $uid);
+//
+//        if($obj instanceof self)
+//        {
+//            throw new Exception(
+//                sprintf('ScheduleJob: %s:%s exists.', $queue, $uid)
+//            );
+//        }
 
         if(!is_array($args)) {
             throw new InvalidArgumentException(
