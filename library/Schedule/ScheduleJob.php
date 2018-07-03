@@ -25,13 +25,6 @@ class ScheduleJob
         if (!isset($this->_payload['id'])) {
             $this->_payload['id'] = md5(uniqid('', TRUE));
         }
-
-//        $this->_payload = array(
-//            'class' => $class,
-//            'args'  => $args,
-//            'id'    => md5(uniqid('', TRUE)),
-//            'queue_time' => microtime(true),
-//        );
     }
 
     public function getArguments()
@@ -145,16 +138,15 @@ class ScheduleJob
         return NULL;
     }
 
-    public static function create($uid, $queue, $class, array $args)
+    public static function create($uid, $queue, $class, array $args, $override = FALSE)
     {
-//        $obj = self::find($queue, $uid);
-//
-//        if($obj instanceof self)
-//        {
-//            throw new Exception(
-//                sprintf('ScheduleJob: %s:%s exists.', $queue, $uid)
-//            );
-//        }
+        if($override)
+        {
+            if(self::find($queue, $uid) instanceof self)
+            {
+                return FALSE;
+            }
+        }
 
         if(!is_array($args)) {
             throw new InvalidArgumentException(
