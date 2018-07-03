@@ -9,12 +9,14 @@ class FCLeader extends Model
     public $name;
     public $queues;
     public $includes;
+    public $workerCount;
 
     protected function fc_defaultInit()
     {
         $this->name = NULL;
         $this->queues = array();
         $this->includes = array();
+        $this->workerCount = 1;
     }
 
     protected function fc_afterGenerate($data = array())
@@ -25,6 +27,10 @@ class FCLeader extends Model
 
         if(empty($this->queues)) {
             die(__CLASS__ . " queues error.\n");
+        }
+
+        if(!is_int($this->workerCount) || $this->workerCount <= 0) {
+            die(__CLASS__ . " workerCount error.\n");
         }
 
         foreach ($this->includes as $file)
@@ -41,6 +47,7 @@ class FCLeader extends Model
             'name' => 'name',
             'queues' => 'queues',
             'includes' => 'includes',
+            'workerCount' => 'workerCount',
         );
     }
 

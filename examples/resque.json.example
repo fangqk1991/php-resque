@@ -1,12 +1,13 @@
 {
   "name": "EXAMPLE",
   "redis": "127.0.0.1:6488",
-  "use_schedule": false,
+  "useSchedule": false,
   "logFile": "${__DIR__}/../run.local/php-resque.log",
   "pidFile": "${__DIR__}/../run.local/php-resque.pid",
   "leaders": [
     {
       "name": "TASK_1",
+      "workerCount": 1,
       "queues": [
         "TASK_1"
       ],
@@ -16,6 +17,7 @@
     },
     {
       "name": "TASK_2",
+      "workerCount": 1,
       "queues": [
         "TASK_2"
       ],

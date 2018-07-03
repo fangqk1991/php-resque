@@ -88,7 +88,7 @@ class FCMaster extends Model
     {
         return array(
             'name' => 'name',
-            'useSchedule' => 'use_schedule',
+            'useSchedule' => 'useSchedule',
             'redisBackend' => 'redis',
             'logFile' => 'logFile',
             'pidFile' => 'pidFile',
@@ -185,26 +185,25 @@ class FCMaster extends Model
         {
             if($leader instanceof FCLeader)
             {
-                $pid = $this->fork();
+                for($i = 0; $i < $leader->workerCount; ++$i)
+                {
+                    if ($this->fork() === 0) {
 
-                if ($pid === 0) {
+                        Resque::setBackend($this->redisBackend);
+                        $leader->loadIncludes();
 
-                    Resque::setBackend($this->redisBackend);
-                    $leader->loadIncludes();
+                        $worker = new ResqueWorker($leader->queues);
+                        $worker->work();
 
-                    $worker = new ResqueWorker($leader->queues);
-                    $worker->work();
-
-                    return ;
+                        return ;
+                    }
                 }
             }
         }
 
         if($this->useSchedule)
         {
-            $pid = $this->fork();
-
-            if ($pid === 0) {
+            if ($this->fork() === 0) {
 
                 $leader = new ScheduleLeader($this->redisBackend);
                 $leader->watch();
