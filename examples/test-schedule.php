@@ -8,4 +8,6 @@ use FC\Resque\Schedule\ScheduleLeader;
 
 $master = FCMaster::masterFromFile(__DIR__ . '/../config.local/resque.json');
 Resque::setBackend($master->redisBackend);
-ScheduleLeader::run();
+
+$leader = new ScheduleLeader();
+$leader->watch();
