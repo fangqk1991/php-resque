@@ -1,8 +1,11 @@
 <?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
-//
+
+use FC\Resque\Core\Resque;
+use FC\Resque\Launch\FCMaster;
 use FC\Resque\Schedule\ScheduleLeader;
 
-ScheduleLeader::setBackend('127.0.0.1:6488');
+$master = FCMaster::masterFromFile(__DIR__ . '/../config.local/resque.json');
+Resque::setBackend($master->redisBackend);
 ScheduleLeader::run();
