@@ -15,6 +15,7 @@
       "FC\\Utils\\Model\\": "library/Model/",
       "FC\\Resque\\": "library/",
       "FC\\Resque\\Core\\": "library/Core/",
+      "FC\\Resque\\Schedule\\": "library/Schedule/",
       "FC\\Resque\\Launch\\": "library/Launch/",
       "FC\\Resque\\Job\\": "library/Job/"
     }
