@@ -200,7 +200,7 @@ class ResqueWorker
             return 'resque:queue:' . $queue;
         }, $this->queues());
 
-        $arr = Resque::redis()->blpop($list, Resque::kTimeout);
+        $arr = Resque::redis()->blpop($list, 0);
 
         if(empty($arr)) {
             return NULL;

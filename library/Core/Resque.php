@@ -8,7 +8,6 @@ use RuntimeException;
 class Resque
 {
 	const kVersion = '1.3';
-    const kTimeout = 5;
 
 	private $_redisBackend;
 	private $_redis;
@@ -54,6 +53,7 @@ class Resque
 		$redis = new Redis();
 		list($host, $port) = explode(':', $instance->_redisBackend);
 		$redis->connect($host, $port);
+        $redis->setOption(Redis::OPT_READ_TIMEOUT, -1);
 
         $instance->_redis = $redis;
 		return $redis;
