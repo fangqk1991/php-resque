@@ -28,6 +28,6 @@
   "require": {
     "php": ">=5.4.0",
     "ext-pcntl": "*",
-    "fang/php-model": "dev-master"
+    "fang/php-model": "0.1.0"
   }
 }
