@@ -2,9 +2,9 @@
 
 namespace FC\Resque\Launch;
 
-use FC\Utils\Model\Model;
+use FC\Model\FCModel;
 
-class FCLeader extends Model
+class FCLeader extends FCModel
 {
     public $name;
     public $queues;

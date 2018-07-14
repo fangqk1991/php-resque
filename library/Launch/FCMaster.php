@@ -2,12 +2,12 @@
 
 namespace FC\Resque\Launch;
 
+use FC\Model\FCModel;
 use FC\Resque\Core\Resque;
 use FC\Resque\Core\ResqueWorker;
 use FC\Resque\Schedule\ScheduleLeader;
-use FC\Utils\Model\Model;
 
-class FCMaster extends Model
+class FCMaster extends FCModel
 {
     public $name;
     public $redisBackend;
