@@ -139,11 +139,15 @@ class FCMaster extends FCModel
     public function killPIDs()
     {
         foreach ($this->_subPIDs as $pid)
-            posix_kill($pid, SIGKILL);
+        {
+            $ret = posix_kill($pid, SIGKILL);
+            $this->println(sprintf('Kill sub progress(%d): %s', $pid, $ret ? 'succ.' : 'fail.'));
+        }
 
         if($this->_curPID > 0)
         {
-            posix_kill($this->_curPID, SIGKILL);
+            $ret = posix_kill($this->_curPID, SIGKILL);
+            $this->println(sprintf('Kill master progress(%d): %s', $pid, $ret ? 'succ.' : 'fail.'));
         }
 
         if(file_exists($this->pidFile))
@@ -234,5 +238,10 @@ class FCMaster extends FCModel
         $queue = array($this->name . '-MASTER');
         $worker = new ResqueWorker($queue);
         $worker->work();
+    }
+
+    private function println($msg)
+    {
+        fwrite(STDOUT, sprintf('%s%s', $msg, PHP_EOL));
     }
 }
