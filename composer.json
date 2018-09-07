@@ -27,7 +27,10 @@
   },
   "require": {
     "php": ">=5.4.0",
+    "ext-redis": "*",
     "ext-pcntl": "*",
+    "ext-json": "*",
+    "ext-posix": "*",
     "fang/php-model": "0.1.0"
   }
 }
