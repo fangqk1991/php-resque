@@ -16,5 +16,5 @@ $ruleJob->performWithRule($loopRule);
 
 $curTime = time();
 $loopRule = LoopRule::generate($curTime, $curTime + 5, 1);
-//$ruleJob->performWithRule($loopRule);
+$ruleJob->performWithRule($loopRule);
 

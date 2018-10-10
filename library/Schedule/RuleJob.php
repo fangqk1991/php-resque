@@ -13,6 +13,7 @@ class RuleJob extends FCModel
     public $class;
     public $args;
     public $createTime;
+    public $version;
 
     /**
      * @var LoopRule
@@ -27,6 +28,7 @@ class RuleJob extends FCModel
 
     protected function fc_defaultInit()
     {
+        $this->version = 0;
         $this->createTime = microtime(true);
     }
 
@@ -47,6 +49,7 @@ class RuleJob extends FCModel
 
     public function performWithRule(LoopRule $loopRule)
     {
+        $this->version += 1;
         $this->loopRule = $loopRule;
         $this->consume();
     }
@@ -71,6 +74,7 @@ class RuleJob extends FCModel
             $args = [
                 'uid' => $this->uid,
                 'queue' => $this->queue,
+                'version' => $this->version,
             ];
 
             $scheduleJob = ScheduleJob::create(uniqid(), $this->queue, '\FC\Resque\Schedule\RuleTask', $args);
@@ -147,6 +151,7 @@ class RuleJob extends FCModel
             'args' => 'args',
             'loopRule' => 'loop_rule',
             'createTime' => 'create_time',
+            'version' => 'version',
         ];
     }
 

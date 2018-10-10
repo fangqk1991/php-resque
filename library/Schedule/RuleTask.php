@@ -13,13 +13,14 @@ class RuleTask implements IResqueTask
     {
         $uid = $params['uid'];
         $queue = $params['queue'];
+        $version = $params['version'];
 
         $job = RuleJob::find($queue, $uid);
 
-        if($job instanceof RuleJob)
+        if($job instanceof RuleJob && $job->version === $version)
         {
-            $job->consume();
             Resque::enqueue($job->queue, $job->class, $job->args);
+            $job->consume();
         }
     }
 }
