@@ -8,9 +8,9 @@ use FC\Resque\Schedule\RuleJob;
 
 MyResqueEx::setBackend(MyConfigEx::Resque_RedisEnd);
 
-$curTime = time();
 $ruleJob = RuleJob::create(uniqid(), 'TASK_1', 'TellTime', array('xxx' => 'test' . rand(0, 10000)));
 
+$curTime = time();
 $loopRule = LoopRule::generate($curTime, $curTime + 3, 1);
 $ruleJob->performWithRule($loopRule);
 

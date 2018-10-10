@@ -2,8 +2,6 @@
 
 namespace FC\Resque\Schedule;
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-
 use FC\Resque\Core\Resque;
 use FC\Resque\Job\IResqueTask;
 
