@@ -10,7 +10,7 @@ class TellTime implements IResqueTask
     {
         $fp = fopen(__DIR__ . '/../run.local/tell-time.txt', "a");
         flock($fp, LOCK_EX) ;
-        fwrite($fp, sprintf('%s %s%s', date('Y-m-d H:i:s'), $params['enqueue_time'], PHP_EOL));
+        fwrite($fp, sprintf('%s %s%s', date('Y-m-d H:i:s'), $params['xxx'], PHP_EOL));
         flock($fp, LOCK_UN);
         fclose($fp);
     }

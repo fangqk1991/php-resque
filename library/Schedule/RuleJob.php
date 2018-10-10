@@ -48,12 +48,7 @@ class RuleJob extends FCModel
     public function performWithRule(LoopRule $loopRule)
     {
         $this->loopRule = $loopRule;
-        $this->save();
-
-        Resque::enqueue($this->queue, '\FC\Resque\Schedule\RuleTask', [
-            'uid' => $this->uid,
-            'queue' => $this->queue
-        ]);
+        $this->consume();
     }
 
     public function save()
@@ -71,13 +66,20 @@ class RuleJob extends FCModel
         $nextTime = $this->loopRule->next();
         $this->save();
 
-        $scheduleJob = ScheduleJob::create(uniqid(), $this->queue, '\FC\Resque\Schedule\RuleTask',[
-            'uid' => $this->uid,
-            'queue' => $this->queue
-        ]);
-        $scheduleJob->performAtTime($nextTime);
+        if($nextTime)
+        {
+            $args = [
+                'uid' => $this->uid,
+                'queue' => $this->queue,
+            ];
 
-        return $nextTime;
+            $scheduleJob = ScheduleJob::create(uniqid(), $this->queue, '\FC\Resque\Schedule\RuleTask', $args);
+
+            if(!$scheduleJob->performAtTime($nextTime))
+            {
+                Resque::enqueue($this->queue, '\FC\Resque\Schedule\RuleTask', $args);
+            }
+        }
     }
 
     public function cancel()

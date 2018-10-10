@@ -4,6 +4,7 @@ namespace FC\Resque\Schedule;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
+use FC\Resque\Core\Resque;
 use FC\Resque\Job\IResqueTask;
 
 class RuleTask implements IResqueTask
@@ -14,15 +15,11 @@ class RuleTask implements IResqueTask
         $queue = $params['queue'];
 
         $job = RuleJob::find($queue, $uid);
+
         if($job instanceof RuleJob)
         {
-            $nextTime = $job->consume();
-
-            if($nextTime)
-            {
-                $scheduleJob = ScheduleJob::create(uniqid(), $job->queue, $job->class, $job->args);
-                $scheduleJob->performAtTime($nextTime);
-            }
+            $job->consume();
+            Resque::enqueue($job->queue, $job->class, $job->args);
         }
     }
 }

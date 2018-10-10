@@ -69,7 +69,7 @@ class ScheduleJob
 
     public function performAfterDelay($seconds)
     {
-        $this->performAtTime(time() + $seconds);
+        return $this->performAtTime(time() + $seconds);
     }
 
     public function performAtTime($timestamp)
@@ -79,7 +79,7 @@ class ScheduleJob
 
         if($seconds <= 0)
         {
-            return ;
+            return FALSE;
         }
 
         $redis = self::redis();
@@ -93,6 +93,8 @@ class ScheduleJob
         $redis->set($jobKey, json_encode($this->_payload));
         $redis->zAdd($this->redisKey_jobsSetForQueue(), $timestamp, $jobKey);
         $redis->zAdd($this->redisKey_jobsSet(), $timestamp, $jobKey);
+
+        return TRUE;
     }
 
     public function cancel()
