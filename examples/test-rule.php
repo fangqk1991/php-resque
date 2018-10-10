@@ -6,7 +6,8 @@ require_once __DIR__ . '/MyResqueEx.php';
 use FC\Resque\Schedule\LoopRule;
 use FC\Resque\Schedule\RuleJob;
 
-$loopRule = LoopRule::generate(time(), time() + 100, 5);
+$curTime = time();
+$loopRule = LoopRule::generate($curTime, $curTime + 20, 5);
 
 //while ($cur = $loopRule->next())
 //{
@@ -15,6 +16,6 @@ $loopRule = LoopRule::generate(time(), time() + 100, 5);
 
 MyResqueEx::setBackend(MyConfigEx::Resque_RedisEnd);
 
-$ruleJob = RuleJob::create(uniqid(), 'TASK_1', 'SomeTask2', array('arg-2' => 'arg-2'));
+$ruleJob = RuleJob::create(uniqid(), 'TASK_1', 'TellTime', array('enqueue_time' => date('Y-m-d H:i:s', $curTime)));
 $ruleJob->performWithRule($loopRule);
 
