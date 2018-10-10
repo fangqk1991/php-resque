@@ -2,46 +2,69 @@
 
 namespace FC\Resque\Schedule;
 
-use FC\Resque\Core\Resque;
-use InvalidArgumentException;
+use FC\Model\FCModel;
 
-class LoopRule
+class LoopRule extends FCModel
 {
-    private $_startVal;     // timestamp
-    private $_endVal;       // timestamp
-    private $_delta;        // seconds
-    private $_conditions;
-
-    private $_curVal;       // timestamp
-
-    public function __construct($startVal, $endVal, $delta, $conditions = NULL)
-    {
-        $curValue = max($startVal, time());
-        $diff = ($curValue - $startVal) % $delta;
-
-        if($diff > 0)
-        {
-            $curValue -= $diff;
-        }
-        else
-        {
-            $curValue -= $delta;
-        }
-
-        $this->_delta = $delta;
-        $this->_startVal = $startVal;
-        $this->_endVal = $endVal;
-        $this->_curVal = $curValue;
-    }
+    public $startVal;     // timestamp
+    public $endVal;       // timestamp
+    public $delta;        // seconds
+    public $curVal;       // timestamp
 
     public function next()
     {
-        if($this->_curVal !== NULL)
+        if($this->curVal !== NULL)
         {
-            $curValue = $this->_curVal + $this->_delta;
-            $this->_curVal = $curValue <= $this->_endVal ? $curValue : NULL;
+            $curValue = $this->curVal + $this->delta;
+            $this->curVal = $curValue <= $this->endVal ? $curValue : NULL;
         }
 
-        return $this->_curVal;
+        return $this->curVal;
+    }
+
+    protected function fc_afterGenerate($data = array())
+    {
+        $curVal = $this->curVal;
+
+        if($curVal === NULL)
+        {
+            $curVal = time();
+        }
+
+        $curVal = max($this->startVal, $curVal);
+        $diff = ($curVal - $this->startVal) % $this->delta;
+
+        if($diff > 0)
+        {
+            $curVal -= $diff;
+        }
+        else
+        {
+            $curVal -= $this->delta;
+        }
+
+        $this->curVal = $curVal;
+    }
+
+    protected function fc_propertyMapper()
+    {
+        return [
+            'startVal' => 'start_val',
+            'endVal' => 'end_val',
+            'delta' => 'delta',
+            'curVal' => 'cur_val',
+        ];
+    }
+
+    public static function generate($startVal, $endVal, $delta, $curVal = NULL)
+    {
+        $obj = new LoopRule();
+        $obj->fc_generate([
+            'start_val' => $startVal,
+            'end_val' => $endVal,
+            'delta' => $delta,
+            'cur_val' => $curVal,
+        ]);
+        return $obj;
     }
 }
