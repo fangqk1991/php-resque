@@ -2,64 +2,42 @@
 
 namespace FC\Resque\Schedule;
 
+use FC\Model\FCModel;
 use FC\Resque\Core\Resque;
 use InvalidArgumentException;
 
-class RuleJob
+class RuleJob extends FCModel
 {
-    private $_payload;
+    public $uid;
+    public $queue;
+    public $class;
+    public $args;
+    public $createTime;
+
+    /**
+     * @var LoopRule
+     */
+    public $loopRule;
+
 
     private static function redis()
     {
         return Resque::redis();
     }
 
-    public function __construct($payload)
+    protected function fc_defaultInit()
     {
-        $this->_payload = $payload;
-
-        if (!isset($this->_payload['args'])) {
-            $this->_payload['args'] = array();
-        }
-
-        if (!isset($this->_payload['id'])) {
-            $this->_payload['id'] = md5(uniqid('', TRUE));
-        }
-    }
-
-    public function getArguments()
-    {
-        return $this->_payload['args'];
-    }
-
-    public function getJobID()
-    {
-        return $this->_payload['id'];
-    }
-
-    public function getClassName()
-    {
-        return $this->_payload['class'];
-    }
-
-    public function getQueue()
-    {
-        return $this->_payload['queue'];
-    }
-
-    private function redisKey_jobFlag()
-    {
-        return sprintf('rule:queue:%s:job:%s', $this->getQueue(), $this->getJobID());
+        $this->createTime = microtime(true);
     }
 
     private function redisKey_jobPayload()
     {
-        return sprintf('rule:queue:%s:job:%s:payload', $this->getQueue(), $this->getJobID());
+        return sprintf('rule:queue:%s:job:%s:payload', $this->queue, $this->uid);
     }
 
     private function redisKey_jobsSetForQueue()
     {
-        return sprintf('rule:queue:%s:jobs-zset', $this->getQueue());
+        return sprintf('rule:queue:%s:jobs-zset', $this->queue);
     }
 
     private function redisKey_jobsSet()
@@ -67,49 +45,44 @@ class RuleJob
         return 'rule:jobs-zset';
     }
 
-//    public function performAfterDelay($seconds)
-//    {
-//        $this->performAtTime(time() + $seconds);
-//    }
-//
-//    public function performAtTime($timestamp)
-//    {
-//        $timestamp = intval($timestamp);
-//        $seconds = $timestamp - time();
-//
-//        if($seconds <= 0)
-//        {
-//            return ;
-//        }
-//
-//        $redis = self::redis();
-//
-//        $flagKey = $this->redisKey_jobFlag();
-//        $jobKey = $this->redisKey_jobPayload();
-//
-//        $redis->set($flagKey, 1);
-//        $redis->expire($flagKey, $seconds);
-//
-//        $redis->set($jobKey, json_encode($this->_payload));
-//        $redis->zAdd($this->redisKey_jobsSetForQueue(), $timestamp, $jobKey);
-//        $redis->zAdd($this->redisKey_jobsSet(), $timestamp, $jobKey);
-//    }
+    public function performWithRule(LoopRule $loopRule)
+    {
+        $this->loopRule = $loopRule;
+        $this->save();
+
+        Resque::enqueue($this->queue, '\FC\Resque\Schedule\RuleTask', [
+            'uid' => $this->uid,
+            'queue' => $this->queue
+        ]);
+    }
+
+    public function save()
+    {
+        $redis = self::redis();
+        $jobKey = $this->redisKey_jobPayload();
+
+        $redis->set($jobKey, json_encode($this->fc_encode()));
+        $redis->zAdd($this->redisKey_jobsSetForQueue(), $this->createTime, $jobKey);
+        $redis->zAdd($this->redisKey_jobsSet(), $this->createTime, $jobKey);
+    }
+
+    public function consume()
+    {
+        $nextTime = $this->loopRule->next();
+        $this->save();
+
+        $scheduleJob = ScheduleJob::create(uniqid(), $this->queue, '\FC\Resque\Schedule\RuleTask',[
+            'uid' => $this->uid,
+            'queue' => $this->queue
+        ]);
+        $scheduleJob->performAtTime($nextTime);
+
+        return $nextTime;
+    }
 
     public function cancel()
     {
-        $this->removeJob();
-    }
-
-    public function run()
-    {
-//        Resque::enqueue($this->getQueue(), $this->getClassName(), $this->getArguments());
-        $this->removeJob();
-    }
-
-    private function removeJob()
-    {
         $redis = self::redis();
-        $redis->del($this->redisKey_jobFlag());
         $redis->del($this->redisKey_jobPayload());
         $redis->del($this->redisKey_jobsSetForQueue());
         $redis->del($this->redisKey_jobsSet());
@@ -117,22 +90,20 @@ class RuleJob
 
     public static function find($queue, $uid)
     {
-        $obj = new self(array(
-            'id' => $uid,
-            'queue' => $queue
-        ));
+        $obj = new self();
+        $obj->uid = $uid;
+        $obj->queue = $queue;
 
-        return self::jobWithPayloadKey($obj->redisKey_jobPayload());
-    }
-
-    public static function jobWithPayloadKey($jobKey)
-    {
         $redis = self::redis();
+        $jobKey = $obj->redisKey_jobPayload();
 
         $payload = json_decode($redis->get($jobKey), TRUE);
         if(is_array($payload))
         {
-            return new self($payload);
+            $ruleJob = new self();
+            $ruleJob->fc_generate($payload);
+
+            return $ruleJob;
         }
 
         return NULL;
@@ -154,14 +125,33 @@ class RuleJob
             );
         }
 
-        $payload = array(
+        $ruleJob = new self();
+        $ruleJob->fc_generate([
+            'uid' => empty($uid) ? md5(uniqid('', TRUE)) : $uid,
             'queue' => $queue,
             'class' => $class,
-            'args'  => $args,
-            'id'    => empty($uid) ? md5(uniqid('', TRUE)) : $uid,
-            'queue_time' => microtime(true),
-        );
+            'args' => $args,
+        ]);
 
-        return new RuleJob($payload);
+        return $ruleJob;
+    }
+
+    protected function fc_propertyMapper()
+    {
+        return [
+            'uid' => 'uid',
+            'queue' => 'queue',
+            'class' => 'class',
+            'args' => 'args',
+            'loopRule' => 'loop_rule',
+            'createTime' => 'create_time',
+        ];
+    }
+
+    protected function fc_propertyClassMapper()
+    {
+        return [
+            'loopRule' => '\FC\Resque\Schedule\LoopRule'
+        ];
     }
 }

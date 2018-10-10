@@ -15,8 +15,10 @@ class LoopRule extends FCModel
     {
         if($this->curVal !== NULL)
         {
-            $curValue = $this->curVal + $this->delta;
-            $this->curVal = $curValue <= $this->endVal ? $curValue : NULL;
+            $curVal = $this->curVal + $this->delta;
+            $curVal -= ($curVal - $this->startVal) % $this->delta;
+
+            $this->curVal = $curVal <= $this->endVal ? $curVal : FALSE;
         }
 
         return $this->curVal;
@@ -24,26 +26,10 @@ class LoopRule extends FCModel
 
     protected function fc_afterGenerate($data = array())
     {
-        $curVal = $this->curVal;
-
-        if($curVal === NULL)
+        if($this->curVal === NULL)
         {
-            $curVal = time();
+            $this->curVal = max($this->startVal, time());
         }
-
-        $curVal = max($this->startVal, $curVal);
-        $diff = ($curVal - $this->startVal) % $this->delta;
-
-        if($diff > 0)
-        {
-            $curVal -= $diff;
-        }
-        else
-        {
-            $curVal -= $this->delta;
-        }
-
-        $this->curVal = $curVal;
     }
 
     protected function fc_propertyMapper()
