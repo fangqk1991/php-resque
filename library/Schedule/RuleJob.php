@@ -80,7 +80,7 @@ class RuleJob extends FCModel
 
             $scheduleJob = ScheduleJob::create(uniqid(), $this->queue, RuleTask::class, $args);
 
-            if(!$scheduleJob->performAtTime($nextTime))
+            if(!$scheduleJob->performAtTimestamp($nextTime))
             {
                 Resque::enqueue($this->queue, RuleTask::class, $args);
             }

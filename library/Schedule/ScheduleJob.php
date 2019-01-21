@@ -69,10 +69,15 @@ class ScheduleJob
 
     public function performAfterDelay($seconds)
     {
-        return $this->performAtTime(time() + $seconds);
+        return $this->performAtTimestamp(time() + $seconds);
     }
 
-    public function performAtTime($timestamp)
+    public function performAtTimeStr($timeStr)
+    {
+        return $this->performAtTimestamp(strtotime($timeStr));
+    }
+
+    public function performAtTimestamp($timestamp)
     {
         $timestamp = intval($timestamp);
         $seconds = $timestamp - time();
@@ -113,8 +118,8 @@ class ScheduleJob
         $redis = self::redis();
         $redis->del($this->redisKey_jobFlag());
         $redis->del($this->redisKey_jobPayload());
-        $redis->del($this->redisKey_jobsSetForQueue());
-        $redis->del($this->redisKey_jobsSet());
+        $redis->zRem($this->redisKey_jobsSetForQueue(), $this->redisKey_jobPayload());
+        $redis->zRem($this->redisKey_jobsSet(), $this->redisKey_jobPayload());
     }
 
     public static function find($queue, $uid)
