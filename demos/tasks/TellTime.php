@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
+namespace FCResque\Demos\Tasks;
 
 use FC\Resque\Job\IResqueTask;
 

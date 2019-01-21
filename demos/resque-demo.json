@@ -1,0 +1,19 @@
+{
+  "name": "EXAMPLE",
+  "redis": "127.0.0.1:6379",
+  "useSchedule": false,
+  "logFile": "${__DIR__}/php-resque.log",
+  "pidFile": "${__DIR__}/php-resque.pid",
+  "leaders": [
+    {
+      "name": "TaskLeaderDemo",
+      "workerCount": 1,
+      "queues": [
+        "TaskQueueDemo"
+      ],
+      "includes": [
+        "${__DIR__}/../vendor/autoload.php"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+php-resque.log
+php-resque.pid
+*.txt

@@ -8,6 +8,6 @@ use FC\Resque\Launch\FCLauncher;
 $launchFile = $argv[0];
 $cmd = isset($argv[1]) ? $argv[1] : '';
 
-$launcher = new FCLauncher($launchFile, __DIR__ . '/../config.local/resque.json');
+$launcher = new FCLauncher($launchFile, __DIR__ . '/resque-demo.json');
 $launcher->handle($cmd);
 

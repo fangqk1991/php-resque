@@ -18,6 +18,7 @@
   "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
+      "FCResque\\Demos\\Tasks\\": "demos/tasks/",
       "FC\\Resque\\": "library/",
       "FC\\Resque\\Core\\": "library/Core/",
       "FC\\Resque\\Schedule\\": "library/Schedule/",
