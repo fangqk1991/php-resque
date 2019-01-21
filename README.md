@@ -1,47 +1,86 @@
-# php-resque
+# 简介
+PHP 异步任务，定时任务，循环任务。
+
 本工程借鉴了 [chrisboulton / php-resque](https://github.com/chrisboulton/php-resque) 的代码实现。
 
 ### 一些设计
 * 在等待任务方面，本工程完全采用 blpop 的方式，避免轮询引发的任务执行延时问题
 * 采用 FCMaster -> FCLeader -> Workers 的组织方式，Master 管理若干 Leader，每个 Leader 为独立进程，在收到任务时，fork 自身成为 Worker 执行任务，待 Worker 执行完毕退出，Leader 继续运行等待下一任务。
-
-### 目录 / 文件说明
-* **examples**: 一些实例
-* **config.local**: 本地配置目录，可根据实际情况将编辑相关配置文件内容
-* **library**: 核心代码
-* **php-resque.php**: php-resque 调用脚本
+* 对于每个 Leader，可根据需要设置 Worker 数量
 
 ### 运行要求
-* PHP 5.4+
+* PHP 5.5+
 * Redis 2.2+
-* Composer
+* [Composer](https://getcomposer.org)
 
-### 应用工程使用
-#### 0. 在应用工程 composer.json 中添加 php-resque
+### 安装
+编辑 `composer.json`，将 `fang/php-resque` 加入其中
+
 ```
 {
-    "require": {
-        "fang/php-resque": "dev-master"
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/fangqk1991/php-resque"
     }
+  ],
+  ...
+  ...
+  "require": {
+    "fang/php-resque": "~0.2"
+  }
 }
+
 ```
 
-#### 1. 安装依赖库
+执行命令
+
 ```
 composer install
 ```
 
-#### 2. 启动服务
-* 参考 `php-resque-example.php` 建立启动脚本及相关配置文件
-* 执行启动脚本
+### 使用
+1. 建立配置文件，见 [示例](https://github.com/fangqk1991/php-resque/blob/master/demos/resque-demo.json)
+2. 建立启动脚本，启动脚本支持 start / stop / restart / status 命令，见 [示例](https://github.com/fangqk1991/php-resque/blob/master/demos/launcher-demo.php)
+3. 建立 Task 类，并实现 `IResqueTask` 接口，见 [示例](https://github.com/fangqk1991/php-resque/blob/master/demos/tasks/TaskDemo.php)
+4. 工程中调用，见 [示例](https://github.com/fangqk1991/php-resque/blob/master/demos/application-demo.php)
+5. 如需使用定时任务、循环任务，见 [示例](https://github.com/fangqk1991/php-resque/blob/master/demos/schedule-demo.php)
 
-#### 3. 任务定义
-* 任务文件需要继承 `IResqueTask`，参考 `SomeTask` / `SomeTask2`
-
-#### 4. 使用案例
-可参考 `MyResqueEx.php` 和 `test-resque.php` 调用
+### 调用示例
+#### launcher-demo.php
 
 ```
-MyResqueEx::enqueue('TASK_1', '\FC\Example\SomeTask', array('delay' => 10));
-MyResqueEx::enqueue('TASK_2', 'SomeTask2', array('arg-2' => 'arg-2'));
+$launchFile = $argv[0];
+$cmd = isset($argv[1]) ? $argv[1] : '';
+
+// 配置文件中的 ${__DIR__} 代表配置文件所在的文件目录
+$launcher = new FCLauncher($launchFile, __DIR__ . '/resque-demo.json');
+$launcher->handle($cmd);
+```
+
+#### TaskDemo.php
+```
+class TaskDemo implements IResqueTask
+{
+    public function perform($params)
+    {
+        ...
+    }
+}
+```
+
+#### 常规调用
+```
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use FC\Resque\Core\Resque;
+use FCResque\Demos\Tasks\TaskDemo;
+
+// Redis 地址需要和 resque-demo.json 一致
+Resque::setBackend('127.0.0.1:6379');
+
+// 两种调用形式
+Resque::enqueue('TaskQueueDemo', TaskDemo::class, ['msg' => 'Hello.']);
+Resque::enqueue('TaskQueueDemo', '\FCResque\Demos\Tasks\TaskDemo', ['msg' => 'Hello again.']);
+
 ```

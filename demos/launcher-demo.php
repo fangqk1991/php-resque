@@ -48,6 +48,7 @@ $cmd = isset($argv[1]) ? $argv[1] : '';
 //// 可通过此方法添加全局观察者
 //Resque::addObserver(new ResqueObserver());
 
+// 配置文件中的 ${__DIR__} 代表配置文件所在的文件目录
 $launcher = new FCLauncher($launchFile, __DIR__ . '/resque-demo.json');
 $launcher->handle($cmd);
 
