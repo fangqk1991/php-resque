@@ -4,6 +4,7 @@ namespace FC\Resque\Schedule;
 
 use FC\Model\FCModel;
 use FC\Resque\Core\Resque;
+use FC\Resque\Schedule\RuleTask;
 use InvalidArgumentException;
 
 class RuleJob extends FCModel
@@ -77,11 +78,11 @@ class RuleJob extends FCModel
                 'version' => $this->version,
             ];
 
-            $scheduleJob = ScheduleJob::create(uniqid(), $this->queue, '\FC\Resque\Schedule\RuleTask', $args);
+            $scheduleJob = ScheduleJob::create(uniqid(), $this->queue, RuleTask::class, $args);
 
             if(!$scheduleJob->performAtTime($nextTime))
             {
-                Resque::enqueue($this->queue, '\FC\Resque\Schedule\RuleTask', $args);
+                Resque::enqueue($this->queue, RuleTask::class, $args);
             }
         }
     }
