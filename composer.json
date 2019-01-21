@@ -1,8 +1,8 @@
 {
   "repositories": [
     {
-      "type": "composer",
-      "url": "https://composer.19890615.com"
+      "type": "vcs",
+      "url": "https://github.com/fangqk1991/php-model"
     }
   ],
   "name": "fang/php-resque",
@@ -31,6 +31,6 @@
     "ext-pcntl": "*",
     "ext-json": "*",
     "ext-posix": "*",
-    "fang/php-model": "0.1.0"
+    "fang/php-model": "~0.1"
   }
 }
