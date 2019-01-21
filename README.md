@@ -59,7 +59,7 @@ $launcher->handle($cmd);
 ```
 
 ```
-# 启动任务
+# Shell 启动服务 (后台运行)
 ./launcher-demo.php start
 ```
 
