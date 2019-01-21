@@ -58,6 +58,11 @@ $launcher = new FCLauncher($launchFile, __DIR__ . '/resque-demo.json');
 $launcher->handle($cmd);
 ```
 
+```
+# 启动任务
+./launcher-demo.php start
+```
+
 #### TaskDemo.php
 ```
 class TaskDemo implements IResqueTask
