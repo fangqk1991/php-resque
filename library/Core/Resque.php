@@ -80,7 +80,7 @@ class Resque
 		return ResqueJob::create($queue, $class, $args);
 	}
 
-	public static function addObserve(IResqueObserver $observer)
+	public static function addObserver(IResqueObserver $observer)
     {
         array_push(self::getInstance()->_observers, $observer);
     }
