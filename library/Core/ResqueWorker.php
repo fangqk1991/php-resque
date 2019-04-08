@@ -8,13 +8,13 @@ use FC\Resque\Job\DirtyExitException;
 class ResqueWorker
 {
     private $_id;
-	private $_queues = array();
+    private $_queues = array();
     private $_trigger;
 
     public function __construct(array $queues)
     {
         $this->_queues = $queues;
-        $this->_id = php_uname('n') . ':'.getmypid() . ':' . implode(',', $this->_queues);
+        $this->_id = php_uname('n') . ':' . getmypid() . ':' . implode(',', $this->_queues);
         $this->_trigger = new ResqueTrigger();
     }
 
@@ -23,19 +23,19 @@ class ResqueWorker
         return $this->_id;
     }
 
-	public function work()
-	{
+    public function work()
+    {
         $this->_trigger->onWorkerStart($this);
 
         $this->registerWorker();
 
-		while(true) {
+        while (true) {
 
             $job = $this->waitJob();
 
-			if(!($job instanceof ResqueJob)) {
-				continue;
-			}
+            if (!($job instanceof ResqueJob)) {
+                continue;
+            }
 
             $this->_trigger->onJobFound($job);
 
@@ -49,15 +49,15 @@ class ResqueWorker
             }
 
 
-			$pid = Resque::fork();
+            $pid = Resque::fork();
 
-			// Forked and we're the child. Run the job.
-			if ($pid === 0) {
+            // Forked and we're the child. Run the job.
+            if ($pid === 0) {
                 $this->_trigger->onJobPerform($job);
 
-				$this->perform($job);
+                $this->perform($job);
                 exit(0);
-			}
+            }
 
             $this->_trigger->onSalveCreated($pid);
 
@@ -65,7 +65,7 @@ class ResqueWorker
             pcntl_wait($status);
             $exitStatus = pcntl_wexitstatus($status);
 
-            if($exitStatus !== 0) {
+            if ($exitStatus !== 0) {
                 $this->onJobFailed($job, new DirtyExitException(
                     'Job exited with exit code ' . $exitStatus
                 ));
@@ -74,28 +74,27 @@ class ResqueWorker
             ResqueStat::incr('processed');
             ResqueStat::incr('processed:' . $this->getID());
             Resque::redis()->del($this->redisKey_workerInfo());
-		}
-	}
+        }
+    }
 
-	/**
-	 * Process a single job.
-	 *
-	 * @param ResqueJob $job The job to be processed.
-	 */
-	public function perform(ResqueJob $job)
-	{
-		try {
-			$job->perform();
-		}
-		catch(Exception $e) {
-			$this->onJobFailed($job, $e);
-			return;
-		}
+    /**
+     * Process a single job.
+     *
+     * @param ResqueJob $job The job to be processed.
+     */
+    public function perform(ResqueJob $job)
+    {
+        try {
+            $job->perform();
+        } catch (Exception $e) {
+            $this->onJobFailed($job, $e);
+            return;
+        }
 
         $this->_trigger->onJobDone($job);
-	}
+    }
 
-	private function onJobFailed(ResqueJob $job, Exception $exception)
+    private function onJobFailed(ResqueJob $job, Exception $exception)
     {
         $data = array(
             'failed_at' => strftime('%a %b %d %H:%M:%S %Z %Y'),
@@ -115,47 +114,46 @@ class ResqueWorker
         $this->_trigger->onJobFailed($job, $exception);
     }
 
-	private function queues()
-	{
-		if(!in_array('*', $this->_queues)) {
-			return $this->_queues;
-		}
+    private function queues()
+    {
+        if (!in_array('*', $this->_queues)) {
+            return $this->_queues;
+        }
 
-		return ResqueQueue::queues();
-	}
+        return ResqueQueue::queues();
+    }
 
-	/**
-	 * Register this worker in Redis.
-	 */
-	public function registerWorker()
-	{
-		Resque::redis()->sadd(self::redisKey_workerSet(), $this->_id);
-		Resque::redis()->set($this->redisKey_workerStarted(), strftime('%a %b %d %H:%M:%S %Z %Y'));
-	}
+    /**
+     * Register this worker in Redis.
+     */
+    public function registerWorker()
+    {
+        Resque::redis()->sadd(self::redisKey_workerSet(), $this->_id);
+        Resque::redis()->set($this->redisKey_workerStarted(), strftime('%a %b %d %H:%M:%S %Z %Y'));
+    }
 
-	/**
-	 * Unregister this worker in Redis. (shutdown etc)
-	 */
-	public function unregisterWorker()
-	{
-		$id = $this->_id;
-		Resque::redis()->srem(self::redisKey_workerSet(), $id);
+    /**
+     * Unregister this worker in Redis. (shutdown etc)
+     */
+    public function unregisterWorker()
+    {
+        $id = $this->_id;
+        Resque::redis()->srem(self::redisKey_workerSet(), $id);
         Resque::redis()->del($this->redisKey_workerInfo());
-		Resque::redis()->del($this->redisKey_workerStarted());
-		ResqueStat::clear('processed:' . $id);
+        Resque::redis()->del($this->redisKey_workerStarted());
+        ResqueStat::clear('processed:' . $id);
         ResqueStat::clear('failed:' . $id);
-	}
+    }
 
-	public function job()
-	{
-		$job = Resque::redis()->get($this->redisKey_workerInfo());
-		if(!$job) {
-			return array();
-		}
-		else {
-			return json_decode($job, true);
-		}
-	}
+    public function job()
+    {
+        $job = Resque::redis()->get($this->redisKey_workerInfo());
+        if (!$job) {
+            return array();
+        } else {
+            return json_decode($job, true);
+        }
+    }
 
     /**
      * Return allWorkers workers known to Resque as instantiated instances.
@@ -164,11 +162,11 @@ class ResqueWorker
     public static function allWorkers()
     {
         $items = Resque::redis()->smembers(self::redisKey_workerSet());
-        if(!is_array($items)) {
+        if (!is_array($items)) {
             $items = array();
         }
 
-        $workers = array_map(function($workerID) {
+        $workers = array_map(function ($workerID) {
             list($hostname, $pid, $queuesStr) = explode(':', $workerID, 3);
             $queues = explode(',', $queuesStr);
             $worker = new self($queues);
@@ -202,7 +200,7 @@ class ResqueWorker
 
         $arr = Resque::redis()->blpop($list, 0);
 
-        if(empty($arr)) {
+        if (empty($arr)) {
             return NULL;
         }
 

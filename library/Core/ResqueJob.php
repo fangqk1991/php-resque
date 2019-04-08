@@ -7,13 +7,13 @@ use InvalidArgumentException;
 
 class ResqueJob
 {
-	public $queue;
-	public $payload;
+    public $queue;
+    public $payload;
 
-	public function __construct($queue, $payload)
-	{
-		$this->queue = $queue;
-		$this->payload = $payload;
+    public function __construct($queue, $payload)
+    {
+        $this->queue = $queue;
+        $this->payload = $payload;
 
         if (!isset($this->payload['args'])) {
             $this->payload['args'] = array();
@@ -48,39 +48,39 @@ class ResqueJob
         Resque::redis()->rpush('resque:queue:' . $queue, $data);
     }
 
-	/**
-	 * Create a new job and save it to the specified queue.
-	 *
-	 * @param string $queue The name of the queue to place the job in.
-	 * @param string $class The name of the class that contains the code to execute the job.
-	 * @param array $args Any optional arguments that should be passed when the job is executed.
-	 *
-	 * @return string
-	 * @throws InvalidArgumentException
-	 */
-	public static function create($queue, $class, array $args)
-	{
-		if(!is_array($args)) {
-			throw new InvalidArgumentException(
-				'Supplied $args must be an array.'
-			);
-		}
+    /**
+     * Create a new job and save it to the specified queue.
+     *
+     * @param string $queue The name of the queue to place the job in.
+     * @param string $class The name of the class that contains the code to execute the job.
+     * @param array $args Any optional arguments that should be passed when the job is executed.
+     *
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public static function create($queue, $class, array $args)
+    {
+        if (!is_array($args)) {
+            throw new InvalidArgumentException(
+                'Supplied $args must be an array.'
+            );
+        }
 
-		$payload = array(
-            'class'	=> $class,
-            'args'	=> $args,
-            'id'	=> md5(uniqid('', TRUE)),
+        $payload = array(
+            'class' => $class,
+            'args' => $args,
+            'id' => md5(uniqid('', TRUE)),
             'queue_time' => microtime(true),
         );
 
-		$job = new ResqueJob($queue, $payload);
-		$job->addToQueue();
+        $job = new ResqueJob($queue, $payload);
+        $job->addToQueue();
 
-		return $job;
-	}
+        return $job;
+    }
 
-	public function perform()
-	{
+    public function perform()
+    {
         $className = $this->getClassName();
 
         if (!class_exists($className)) {
@@ -90,29 +90,28 @@ class ResqueJob
         }
 
         $task = new $className();
-        if(!($task instanceof IResqueTask))
-        {
+        if (!($task instanceof IResqueTask)) {
             throw new ResqueException(
                 $className . ' do not implements IResqueTask.'
             );
         }
 
         $task->perform($this->getArguments());
-	}
+    }
 
-	/**
-	 * Re-queue the current job.
-	 * @return string
-	 */
-	public function recreate()
-	{
-		return self::create($this->queue, $this->getClassName(), $this->getArguments());
-	}
+    /**
+     * Re-queue the current job.
+     * @return string
+     */
+    public function recreate()
+    {
+        return self::create($this->queue, $this->getClassName(), $this->getArguments());
+    }
 
-	public function getDescription()
+    public function getDescription()
     {
         $name = array(
-            'Job{' . $this->queue .'}'
+            'Job{' . $this->queue . '}'
         );
         $name[] = 'ID: ' . $this->getJobID();
         $name[] = $this->getClassName();
